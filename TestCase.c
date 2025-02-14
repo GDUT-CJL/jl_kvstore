@@ -5,10 +5,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/time.h>
-#define ENABLE_ARRAY_TEST   0
+#define ENABLE_ARRAY_TEST   1
 #define ENABLE_RBTREE_TEST   1
+#define ENABLE_HASHTABLE_TEST   1
 
-#define MAX_CLIENT_NUM			1000000
+#define MAX_CONNECT_NUM			100000
 #define TIME_SUB_MS(tv1, tv2)  ((tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000)
 
 #define MAX_BUFFER_SIZE     1024
@@ -66,20 +67,29 @@ int test_case(int connfd,char* cmd, char* pattern,char* casename){
     equal(buffer,pattern,casename);
 }
 
+void array_connect_10w(int connfd){
+    int i;
+    for(i = 0; i < MAX_CONNECT_NUM ; ++i){
+        char msg[512] = {0};
+        snprintf(msg,512,"set key%d value%d",i,i);
+        test_case(connfd,msg,"OK\n","SetName");
+    }
+}
+
 void rbtree_connect_10w(int connfd){
     int i;
-    for(i = 0; i < 100000 ; ++i){
+    for(i = 0; i < MAX_CONNECT_NUM ; ++i){
         char msg[512] = {0};
         snprintf(msg,512,"rset key%d value%d",i,i);
         test_case(connfd,msg,"OK\n","SetName");
     }
 }
 
-void array_connect_10w(int connfd){
+void hashtable_connect_10w(int connfd){
     int i;
-    for(i = 0; i < 100000 ; ++i){
+    for(i = 0; i < MAX_CONNECT_NUM ; ++i){
         char msg[512] = {0};
-        snprintf(msg,512,"set key%d value%d",i,i);
+        snprintf(msg,512,"hset key%d value%d",i,i);
         test_case(connfd,msg,"OK\n","SetName");
     }
 }
@@ -95,8 +105,10 @@ int main(int argc,char *argv[])
     const char* ip = argv[1];
     int port = atoi(argv[2]);
     int connfd = Connect_Server(ip,port);
-    // array
+    
 #if 0
+    // array
+    printf("------array------\n");
     test_case(connfd,"set k2 v2","OK\n","set name");
     test_case(connfd,"count","1\n","count");
     test_case(connfd,"get k2","v2\n","get name");
@@ -104,11 +116,19 @@ int main(int argc,char *argv[])
     test_case(connfd,"exist k2","NO EXIST\n","exist name");
 
     // rbtree
+    printf("------rbtree------\n");
     test_case(connfd,"rset k2 v2","OK\n","set name");
     test_case(connfd,"rcount","1\n","count");
     test_case(connfd,"rget k2","v2\n","get name");
     test_case(connfd,"rdelete k2","OK\n","delete name");
     test_case(connfd,"rexist k2","NO EXIST\n","exist name");
+
+    printf("------hashtable------\n");
+    test_case(connfd,"hset k2 v2","OK\n","set name");
+    test_case(connfd,"hcount","1\n","count");
+    test_case(connfd,"hget k2","v2\n","get name");
+    test_case(connfd,"hdelete k2","OK\n","delete name");
+    test_case(connfd,"hexist k2","NO EXIST\n","exist name");
 #endif
 #if ENABLE_ARRAY_TEST
     struct timeval array_begin;
@@ -127,6 +147,16 @@ int main(int argc,char *argv[])
     gettimeofday(&rb_end,NULL);
     int rb_time_used = TIME_SUB_MS(rb_end,rb_begin);
     printf("rbtree used time:%d\n",rb_time_used);
+#endif
+
+#if ENABLE_HASHTABLE_TEST
+    struct timeval hash_begin;
+    gettimeofday(&hash_begin,NULL);
+    hashtable_connect_10w(connfd);
+    struct timeval hash_end;
+    gettimeofday(&hash_end,NULL);
+    int hash_time_used = TIME_SUB_MS(hash_end,hash_begin);
+    printf("hash_time_used used time:%d\n",hash_time_used);
 #endif
     close(connfd);
 }

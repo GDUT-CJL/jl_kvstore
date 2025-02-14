@@ -1,7 +1,5 @@
 #include "kv_store.h"
-struct kvs_array_item_s array_table[MAX_ARRAY_NUMS];
 int array_count = 0;
-
 // struct kvs_array_item_s* array_table;
 
 

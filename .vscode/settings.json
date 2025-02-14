@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "nty_coroutine.h": "c",
+        "kv_store.h": "c"
+    }
+}

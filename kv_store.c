@@ -1,5 +1,6 @@
 // gcc kv_store.c kv_array.c -o kvstore -I ./NtyCo/core/ -L ./NtyCo/ -lntyco -lpthread -ldl
 // gcc kv_store.c kv_array.c kv_rbtree.c -o kvstore -I ./NtyCo/core/ -L ./NtyCo/ -lntyco -lpthread -ldl
+// gcc kv_store.c kv_array.c kv_rbtree.c kv_hash.c -o kvstore -I ./NtyCo/core/ -L ./NtyCo/ -lntyco -lpthread -ldl
 #include <arpa/inet.h>
 
 #include "nty_coroutine.h"
@@ -203,8 +204,8 @@ int kvs_parser_protocol(char *msg,char**buf,int count){
 		else{
 			snprintf(msg,MAX_MSGBUFFER_LENGTH,"NO EXIST\n");
 		}
-	}
 		break;
+	}
 	// btree
 	case KV_CMD_BSET:
 		break;
@@ -219,15 +220,66 @@ int kvs_parser_protocol(char *msg,char**buf,int count){
 	// hash
 		break;
 	case KV_CMD_HSET:
+	{
+		assert(count == 3);
+		int ret = kvs_hash_set(buf[1],buf[2]);
+		memset(msg,0,MAX_MSGBUFFER_LENGTH);
+		if(ret == 0){
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"OK\n");
+		}
+		else{
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"FAILED\n");
+		}
 		break;
+	}
 	case KV_CMD_HGET:
+	{
+		assert(count == 2);
+		char* value = kvs_hash_get(buf[1]);
+		memset(msg,0,MAX_MSGBUFFER_LENGTH);
+		if(value){
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"%s\n",value);
+		}
+		else{
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"NO EXIST\n");
+		}
 		break;
+	}
 	case KV_CMD_HCOUNT:
+	{
+		assert(count == 1);
+		memset(msg,0,MAX_MSGBUFFER_LENGTH);
+		int count = kvs_hash_count();
+		snprintf(msg,MAX_MSGBUFFER_LENGTH,"%d\n",count);
 		break;
+	}
 	case KV_CMD_HDELETE:
+	{
+		assert(count == 2);
+		int ret = kvs_hash_delete(buf[1]);
+		memset(msg,0,MAX_MSGBUFFER_LENGTH);
+		if(ret == 0){
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"OK\n");
+		}
+		else{
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"NO EXIST\n");
+		}
+		break;
+	}
 		break;
 	case KV_CMD_HEXIST:
+	{
+		assert(count == 2);
+		int ret = kvs_hash_exist(buf[1]);
+		memset(msg,0,MAX_MSGBUFFER_LENGTH);
+		if(ret == 0){
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"EXIST\n");
+		}
+		else{
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"NO EXIST\n");
+		}
 		break;
+	}
 	// skiptable
 	case KV_CMD_ZSET:
 		break;
@@ -339,6 +391,7 @@ void server(void *arg) {
 
 int InitEngine(){
 	initRbtree();
+	init_hashtable();
 }
 
 int main(int argc, char *argv[]) {
