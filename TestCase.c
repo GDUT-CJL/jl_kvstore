@@ -1,3 +1,4 @@
+// gcc TestCase.c -o TestCase
 #include <arpa/inet.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -5,12 +6,19 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/time.h>
-#define ENABLE_ARRAY_TEST   1
-#define ENABLE_RBTREE_TEST   1
-#define ENABLE_HASHTABLE_TEST   1
+#define ENABLE_ARRAY_TEST   0
+#define ENABLE_RBTREE_TEST   0
+#define ENABLE_HASHTABLE_TEST   0
+#define ENABLE_SKIPLIST_TEST   0
+#define ENABLE_BTREE_TEST       0
+#define ENABLE_LOG   1
 
-#define MAX_CONNECT_NUM			100000
+#define MAX_REQUEST_NUM			100000
 #define TIME_SUB_MS(tv1, tv2)  ((tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000)
+
+#if ENABLE_LOG
+#define LOG(_fmt, ...) fprintf(stdout, "[%s:%d] " _fmt, __FILE__, __LINE__, __VA_ARGS__)
+#endif
 
 #define MAX_BUFFER_SIZE     1024
 char buffer[MAX_BUFFER_SIZE] = {0};
@@ -33,11 +41,19 @@ int Connect_Server(const char* ip,int port){
 
 int send_msg(int connfd,char* msg){
     int ret = send(connfd,msg,strlen(msg),0);
+    //printf("Sending message: %s\n", msg);
     if(ret == -1){
         perror("send:");
         exit(-1);
     }
-    return ret;
+    else if(ret > 0){
+        return ret;
+    }
+    else{
+        perror("send:");
+        close(connfd);
+    }
+
 }
 
 int recv_msg(int connfd, char* msg){
@@ -52,9 +68,9 @@ int recv_msg(int connfd, char* msg){
 
 int equal(char* res,char* pattern,char* casename){
     if(strcmp(res,pattern) == 0){
-        //printf("PASS -----> '%s'\n",casename);
+        //LOG("PASS -----> '%s'\n",casename);
     }else{
-        printf("NO PASS -----> %s != %s\n",res,pattern);
+        LOG("NO PASS -----> %s != %s\n",res,pattern);
     }
 }
 
@@ -69,7 +85,7 @@ int test_case(int connfd,char* cmd, char* pattern,char* casename){
 
 void array_connect_10w(int connfd){
     int i;
-    for(i = 0; i < MAX_CONNECT_NUM ; ++i){
+    for(i = 0; i < MAX_REQUEST_NUM ; ++i){
         char msg[512] = {0};
         snprintf(msg,512,"set key%d value%d",i,i);
         test_case(connfd,msg,"OK\n","SetName");
@@ -78,7 +94,7 @@ void array_connect_10w(int connfd){
 
 void rbtree_connect_10w(int connfd){
     int i;
-    for(i = 0; i < MAX_CONNECT_NUM ; ++i){
+    for(i = 0; i < MAX_REQUEST_NUM ; ++i){
         char msg[512] = {0};
         snprintf(msg,512,"rset key%d value%d",i,i);
         test_case(connfd,msg,"OK\n","SetName");
@@ -87,9 +103,27 @@ void rbtree_connect_10w(int connfd){
 
 void hashtable_connect_10w(int connfd){
     int i;
-    for(i = 0; i < MAX_CONNECT_NUM ; ++i){
+    for(i = 0; i < MAX_REQUEST_NUM ; ++i){
         char msg[512] = {0};
         snprintf(msg,512,"hset key%d value%d",i,i);
+        test_case(connfd,msg,"OK\n","SetName");
+    }
+}
+
+void skiplist_connect_10w(int connfd){
+    int i;
+    for(i = 0; i < MAX_REQUEST_NUM ; ++i){
+        char msg[512] = {0};
+        snprintf(msg,512,"hset key%d value%d",i,i);
+        test_case(connfd,msg,"OK\n","SetName");
+    }
+}
+
+void btree_connect_10w(int connfd){
+    int i;
+    for(i = 0; i < MAX_REQUEST_NUM ; ++i){
+        char msg[512] = {0};
+        snprintf(msg,512,"bset key%d value%d",i,i);
         test_case(connfd,msg,"OK\n","SetName");
     }
 }
@@ -98,7 +132,7 @@ int main(int argc,char *argv[])
 {
     assert(argc == 3);
     if(argc < 3) {
-        printf("argc < 3\n");
+        LOG("argc < %s\n","3");
         return -1;
     }
 
@@ -106,47 +140,61 @@ int main(int argc,char *argv[])
     int port = atoi(argv[2]);
     int connfd = Connect_Server(ip,port);
     
-#if 0
+#if 1
     // array
-    printf("------array------\n");
-    test_case(connfd,"set k2 v2","OK\n","set name");
-    test_case(connfd,"count","1\n","count");
-    test_case(connfd,"get k2","v2\n","get name");
-    test_case(connfd,"delete k2","OK\n","delete name");
-    test_case(connfd,"exist k2","NO EXIST\n","exist name");
+    // test_case(connfd,"set k2 v2","OK\n","set name");
+    // test_case(connfd,"count","1\n","count");
+    // test_case(connfd,"get k2","v2\n","get name");
+    // test_case(connfd,"delete k2","OK\n","delete name");
+    // test_case(connfd,"exist k2","NO EXIST\n","exist name");
 
-    // rbtree
-    printf("------rbtree------\n");
-    test_case(connfd,"rset k2 v2","OK\n","set name");
-    test_case(connfd,"rcount","1\n","count");
-    test_case(connfd,"rget k2","v2\n","get name");
-    test_case(connfd,"rdelete k2","OK\n","delete name");
-    test_case(connfd,"rexist k2","NO EXIST\n","exist name");
+    // // rbtree
+    // test_case(connfd,"rset k2 v2","OK\n","set name");
+    // test_case(connfd,"rcount","1\n","count");
+    // test_case(connfd,"rget k2","v2\n","get name");
+    // test_case(connfd,"rdelete k2","OK\n","delete name");
+    // test_case(connfd,"rexist k2","NO EXIST\n","exist name");
 
-    printf("------hashtable------\n");
-    test_case(connfd,"hset k2 v2","OK\n","set name");
-    test_case(connfd,"hcount","1\n","count");
-    test_case(connfd,"hget k2","v2\n","get name");
-    test_case(connfd,"hdelete k2","OK\n","delete name");
-    test_case(connfd,"hexist k2","NO EXIST\n","exist name");
+    // // hashtable
+    // test_case(connfd,"hset k2 v2","OK\n","set name");
+    // test_case(connfd,"hcount","1\n","count");
+    // test_case(connfd,"hget k2","v2\n","get name");
+    // test_case(connfd,"hdelete k2","OK\n","delete name");
+    // test_case(connfd,"hexist k2","NO EXIST\n","exist name");
+
+    // // skiplist
+    // test_case(connfd,"zset k2 v2","OK\n","set name");
+    // test_case(connfd,"zcount","1\n","count");
+    // test_case(connfd,"zget k2","v2\n","get name");
+    // test_case(connfd,"zdelete k2","OK\n","delete name");
+    // test_case(connfd,"zexist k2","NO EXIST\n","exist name");
+
+    // btree
+    test_case(connfd,"bset k2 v2","OK\n","set name");
+    test_case(connfd,"bcount","1\n","count");
+    test_case(connfd,"bget k2","v2\n","get name");
+    test_case(connfd,"bdelete k2","OK\n","delete name");
+    test_case(connfd,"bexist k2","EXIST\n","exist name");
 #endif
+
 #if ENABLE_ARRAY_TEST
     struct timeval array_begin;
     gettimeofday(&array_begin,NULL);
     array_connect_10w(connfd);
     struct timeval array_end;
     gettimeofday(&array_end,NULL);
-    int array_time_used = TIME_SUB_MS(array_end,array_begin);
-    printf("array used time:%d\n",array_time_used);
+    double array_time_used = TIME_SUB_MS(array_end,array_begin);
+    LOG("array used time:%f ms,qps: %.2f\n",array_time_used,MAX_REQUEST_NUM / (array_time_used / 1000));
 #endif 
+
 #if ENABLE_RBTREE_TEST
     struct timeval rb_begin;
     gettimeofday(&rb_begin,NULL);
     rbtree_connect_10w(connfd);
     struct timeval rb_end;
     gettimeofday(&rb_end,NULL);
-    int rb_time_used = TIME_SUB_MS(rb_end,rb_begin);
-    printf("rbtree used time:%d\n",rb_time_used);
+    double rb_time_used = TIME_SUB_MS(rb_end,rb_begin);
+    LOG("rbtree used time:%f ms,qps: %.2f\n",rb_time_used,MAX_REQUEST_NUM / (rb_time_used / 1000));
 #endif
 
 #if ENABLE_HASHTABLE_TEST
@@ -155,8 +203,28 @@ int main(int argc,char *argv[])
     hashtable_connect_10w(connfd);
     struct timeval hash_end;
     gettimeofday(&hash_end,NULL);
-    int hash_time_used = TIME_SUB_MS(hash_end,hash_begin);
-    printf("hash_time_used used time:%d\n",hash_time_used);
+    double hash_time_used = TIME_SUB_MS(hash_end,hash_begin);
+    LOG("hash used time:%f ms,qps: %.2f\n",hash_time_used,MAX_REQUEST_NUM / (hash_time_used / 1000));
+#endif
+
+#if ENABLE_SKIPLIST_TEST
+    struct timeval skiplist_begin;
+    gettimeofday(&skiplist_begin,NULL);
+    array_connect_10w(connfd);
+    struct timeval skiplist_end;
+    gettimeofday(&skiplist_end,NULL);
+    double skiplist_time_used = TIME_SUB_MS(skiplist_end,skiplist_begin);
+    LOG("skiplist used time:%f ms,qps: %.2f\n",skiplist_time_used,MAX_REQUEST_NUM / (skiplist_time_used / 1000));
+#endif
+
+#if ENABLE_BTREE_TEST
+    struct timeval btree_begin;
+    gettimeofday(&btree_begin,NULL);
+    array_connect_10w(connfd);
+    struct timeval btree_end;
+    gettimeofday(&btree_end,NULL);
+    double btree_time_used = TIME_SUB_MS(btree_end,btree_begin);
+    LOG("skiplist used time:%f ms,qps: %.2f\n",btree_time_used,MAX_REQUEST_NUM / (btree_time_used / 1000));
 #endif
     close(connfd);
 }

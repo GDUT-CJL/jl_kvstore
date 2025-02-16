@@ -12,19 +12,19 @@ int _hash(char* key,int size){
 }
 
 hashnode_t* _createNode(char* key,char* value){
-    hashnode_t* node = (hashnode_t*)malloc(sizeof(hashnode_t));
+    hashnode_t* node = (hashnode_t*)kvs_malloc(sizeof(hashnode_t));
     if(!node) return NULL;
 
-    node->key = (char*)malloc(sizeof(char));
+    node->key = (char*)kvs_malloc(sizeof(char));
     if(!node->key){
-        free(node);
+        kvs_free(node);
         return NULL;
     } 
 
-    node->value = (char*)malloc(sizeof(char));
+    node->value = (char*)kvs_malloc(sizeof(char));
     if(!node->value){
-        free(node->key);
-        free(node);
+        kvs_free(node->key);
+        kvs_free(node);
         return NULL;
     }
     strcpy(node->key,key); 
@@ -35,9 +35,9 @@ hashnode_t* _createNode(char* key,char* value){
 }
 
 int init_hashtable(){
-    Hash = (hashtable_t*)malloc(sizeof(hashtable_t));
+    Hash = (hashtable_t*)kvs_malloc(sizeof(hashtable_t));
     if(!Hash)   return -1;
-    Hash->nodes = (hashnode_t**)malloc(sizeof(hashnode_t*) * MAX_HASHSIZE);
+    Hash->nodes = (hashnode_t**)kvs_malloc(sizeof(hashnode_t*) * MAX_HASHSIZE);
     if(!Hash->nodes)    return -1;
     
     Hash->max_slots = MAX_HASHSIZE;
@@ -54,11 +54,10 @@ void dest_hashtable(){
             hashnode_t* temp = node;
             node = node->next;
             Hash->nodes[i] = node;
-            free(temp);
+            kvs_free(temp);
         }
     }
-
-    free(Hash);
+    kvs_free(Hash);
 }
 
 int kvs_hash_exist(char* key){
@@ -72,8 +71,7 @@ int kvs_hash_exist(char* key){
         }
         node = node->next;
     }
-    return -1;
-    
+    return -1;   
 }
 
 int kvs_hash_set(char* key,char* value){
@@ -121,10 +119,10 @@ int kvs_hash_delete(char* key){
         hashnode_t* new_head = head->next;
         Hash->nodes[idx] = new_head;
 
-        if(head->key != NULL)   free(head->key);
-        if(head->value != NULL)  free(head->value);
+        if(head->key != NULL)   kvs_free(head->key);
+        if(head->value != NULL)  kvs_free(head->value);
 
-        free(head);
+        kvs_free(head);
 
         Hash->count--;
         return 0;
@@ -143,8 +141,8 @@ int kvs_hash_delete(char* key){
     hashnode_t* tmp = cur->next;
     cur->next = cur->next->next;
 
-    if(tmp->key != NULL)    free(tmp->key);
-    if(tmp->value != NULL)  free(tmp->value);
+    if(tmp->key != NULL)    kvs_free(tmp->key);
+    if(tmp->value != NULL)  kvs_free(tmp->value);
 
     Hash->count--;
     return 0;

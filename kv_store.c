@@ -1,13 +1,14 @@
 // gcc kv_store.c kv_array.c -o kvstore -I ./NtyCo/core/ -L ./NtyCo/ -lntyco -lpthread -ldl
 // gcc kv_store.c kv_array.c kv_rbtree.c -o kvstore -I ./NtyCo/core/ -L ./NtyCo/ -lntyco -lpthread -ldl
 // gcc kv_store.c kv_array.c kv_rbtree.c kv_hash.c -o kvstore -I ./NtyCo/core/ -L ./NtyCo/ -lntyco -lpthread -ldl
+// gcc kv_store.c kv_array.c kv_rbtree.c kv_hash.c kv_btree.c kv_skiplist.c -o kvstore -I ./NtyCo/core/ -L ./NtyCo/ -lntyco -lpthread -ldl
 #include <arpa/inet.h>
-
 #include "nty_coroutine.h"
 #include "kv_store.h"
 
 #define MAX_CLIENT_NUM			1000000
 #define TIME_SUB_MS(tv1, tv2)  ((tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000)
+
 
 // array
 // rbtree
@@ -208,17 +209,72 @@ int kvs_parser_protocol(char *msg,char**buf,int count){
 	}
 	// btree
 	case KV_CMD_BSET:
+	{
+		assert(count == 3);
+		int ret = kvs_btree_set(&kv_b,buf);
+		memset(msg,0,MAX_MSGBUFFER_LENGTH);
+		if(ret == 0){
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"OK\n");
+			printf("%s",msg);
+		}
+		else{
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"FAILED\n");
+		}
 		break;
+	}
 	case KV_CMD_BGET:
+	{
+		assert(count == 2);
+		char* value = kvs_btree_get(&kv_b,buf);
+		memset(msg,0,MAX_MSGBUFFER_LENGTH);
+		if(value){
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"%s\n",value);
+			printf("%s",msg);
+		}
+		else{
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"NO EXIST\n");
+		}
 		break;
+	}
 	case KV_CMD_BCOUNT:
+	{
+		assert(count == 1);
+		memset(msg,0,MAX_MSGBUFFER_LENGTH);
+		int count = kvs_btree_count(&kv_b);
+		snprintf(msg,MAX_MSGBUFFER_LENGTH,"%d\n",count);
+		printf("%s",msg);
 		break;
+	}
 	case KV_CMD_BDELETE:
+	{
+		assert(count == 2);
+		int ret = kvs_btree_delete(&kv_b,buf);
+		memset(msg,0,MAX_MSGBUFFER_LENGTH);
+		if(ret == 0){
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"OK\n");
+			printf("%s",msg);
+
+		}
+		else{
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"NO EXIST\n");
+		}
 		break;
+	}
 	case KV_CMD_BEXIST:
+	{
+		assert(count == 2);
+		int ret = kvs_btree_exist(&kv_b,buf);
+		memset(msg,0,MAX_MSGBUFFER_LENGTH);
+		if(ret == 0){
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"EXIST\n");
+			printf("%s",msg);
+		
+		}
+		else{
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"NO EXIST\n");
+		}
 		break;
-	// hash
-		break;
+	}
 	case KV_CMD_HSET:
 	{
 		assert(count == 3);
@@ -266,7 +322,6 @@ int kvs_parser_protocol(char *msg,char**buf,int count){
 		}
 		break;
 	}
-		break;
 	case KV_CMD_HEXIST:
 	{
 		assert(count == 2);
@@ -282,15 +337,65 @@ int kvs_parser_protocol(char *msg,char**buf,int count){
 	}
 	// skiptable
 	case KV_CMD_ZSET:
+	{
+		assert(count == 3);
+		int ret = kvs_skiplist_set(buf[1],buf[2]);
+		memset(msg,0,MAX_MSGBUFFER_LENGTH);
+		if(ret == 0){
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"OK\n");
+		}
+		else{
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"FAILED\n");
+		}
 		break;
+	}
 	case KV_CMD_ZGET:
+	{
+		assert(count == 2);
+		char* value = kvs_skiplist_get(buf[1]);
+		memset(msg,0,MAX_MSGBUFFER_LENGTH);
+		if(value){
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"%s\n",value);
+		}
+		else{
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"NO EXIST\n");
+		}
 		break;
+	}
 	case KV_CMD_ZCOUNT:
+	{
+		assert(count == 1);
+		memset(msg,0,MAX_MSGBUFFER_LENGTH);
+		int count = kvs_skiplist_count();
+		snprintf(msg,MAX_MSGBUFFER_LENGTH,"%d\n",count);
 		break;
+	}
 	case KV_CMD_ZDELETE:
+	{		
+		assert(count == 2);
+		int ret = kvs_skiplist_delete(buf[1]);
+		memset(msg,0,MAX_MSGBUFFER_LENGTH);
+		if(ret == 0){
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"OK\n");
+		}
+		else{
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"NO EXIST\n");
+		}
 		break;
+	}
 	case KV_CMD_ZEXIST:
+	{
+		assert(count == 2);
+		int ret = kvs_skiplist_exist(buf[1]);
+		memset(msg,0,MAX_MSGBUFFER_LENGTH);
+		if(ret == 0){
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"EXIST\n");
+		}
+		else{
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"NO EXIST\n");
+		}
 		break;
+	}
 	default:
 		break;
 	}
@@ -359,8 +464,7 @@ void server(void *arg) {
 	bind(fd, (struct sockaddr*)&local, sizeof(struct sockaddr_in));
 
 	listen(fd, 20);
-	printf("listen port : %d\n", port);
-
+	LOG("listen port : %d\n", port);
 	
 	struct timeval tv_begin;
 	gettimeofday(&tv_begin, NULL);
@@ -392,6 +496,15 @@ void server(void *arg) {
 int InitEngine(){
 	initRbtree();
 	init_hashtable();
+	initSkipTable();
+	initBtree(&kv_b,6);
+}
+
+void destoryEngine(){
+	dest_hashtable();
+	destRbtree();
+	skiplist_desy();
+	btree_destroy(&kv_b);
 }
 
 int main(int argc, char *argv[]) {
@@ -404,7 +517,7 @@ int main(int argc, char *argv[]) {
 	*port = 8000;
 	nty_coroutine_create(&co, server, port); ////////no run
 	nty_schedule_run(); //run
-
+	destoryEngine();
 	return 0;
 }
 
