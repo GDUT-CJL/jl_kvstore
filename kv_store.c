@@ -8,14 +8,6 @@
 
 #define MAX_CLIENT_NUM			1000000
 #define TIME_SUB_MS(tv1, tv2)  ((tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000)
-
-
-// array
-// rbtree
-// btree
-// hash
-// skiptable
-
 void* kvs_malloc(size_t size){
 	return malloc(size);
 }
@@ -84,16 +76,29 @@ int kvs_parser_protocol(char *msg,char**buf,int count){
 	{
 	case KV_CMD_SET:
 	{
-		assert(count == 3);
-		int ret = kvs_array_set(buf[1],buf[2]);
-		memset(msg,0,MAX_MSGBUFFER_LENGTH);
-		if(ret == 0){
-			snprintf(msg,MAX_MSGBUFFER_LENGTH,"OK\n");
+		if(count == 3){
+			int ret = kvs_array_set(buf[1],buf[2]);
+			memset(msg,0,MAX_MSGBUFFER_LENGTH);
+			if(ret == 0){
+				snprintf(msg,MAX_MSGBUFFER_LENGTH,"OK\n");
+			}
+			else{
+				snprintf(msg,MAX_MSGBUFFER_LENGTH,"FAILED\n");
+			}
+			break;
+		}else if(count > 3){
+			int time = atoi(buf[4]);
+			int ret = kvs_set_array_expired(buf[1],buf[2],buf[3],time);
+			memset(msg,0,MAX_MSGBUFFER_LENGTH);
+			if(ret == 0){
+				snprintf(msg,MAX_MSGBUFFER_LENGTH,"OK(ttl)\n");
+			}
+			else{
+				snprintf(msg,MAX_MSGBUFFER_LENGTH,"FAILED(ttl)\n");
+			}
+			break;
 		}
-		else{
-			snprintf(msg,MAX_MSGBUFFER_LENGTH,"FAILED\n");
-		}
-		break;
+		
 	}
 
 	case KV_CMD_GET:
@@ -268,7 +273,6 @@ int kvs_parser_protocol(char *msg,char**buf,int count){
 		if(ret == 0){
 			snprintf(msg,MAX_MSGBUFFER_LENGTH,"EXIST\n");
 			printf("%s",msg);
-		
 		}
 		else{
 			snprintf(msg,MAX_MSGBUFFER_LENGTH,"NO EXIST\n");
@@ -416,9 +420,9 @@ int kvs_protocol(char* msg,int length){
 	// 分割
 	char* tokens[MAX_TOKENS] = {0};
 	int count = kvs_split_str(tokens,msg);
-	// for(int i = 0; i < count; i++){
-	// 	printf("%s\n",tokens[i]);
-	// }
+	for(int i = 0; i < count; i++){
+		printf("%s\n",tokens[i]);
+	}
 	// 解析
 	return kvs_parser_protocol(msg,tokens,count);
 }

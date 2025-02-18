@@ -68,7 +68,7 @@ int recv_msg(int connfd, char* msg){
 
 int equal(char* res,char* pattern,char* casename){
     if(strcmp(res,pattern) == 0){
-        //LOG("PASS -----> '%s'\n",casename);
+        LOG("PASS -----> '%s'\n",casename);
     }else{
         LOG("NO PASS -----> %s != %s\n",res,pattern);
     }
@@ -142,11 +142,11 @@ int main(int argc,char *argv[])
     
 #if 1
     // array
-    // test_case(connfd,"set k2 v2","OK\n","set name");
-    // test_case(connfd,"count","1\n","count");
-    // test_case(connfd,"get k2","v2\n","get name");
-    // test_case(connfd,"delete k2","OK\n","delete name");
-    // test_case(connfd,"exist k2","NO EXIST\n","exist name");
+    test_case(connfd,"set k2 v2","OK\n","set name");
+    test_case(connfd,"count","1\n","count");
+    test_case(connfd,"get k2","v2\n","get name");
+    test_case(connfd,"delete k2","OK\n","delete name");
+    test_case(connfd,"exist k2","NO EXIST\n","exist name");
 
     // // rbtree
     // test_case(connfd,"rset k2 v2","OK\n","set name");
@@ -170,11 +170,12 @@ int main(int argc,char *argv[])
     // test_case(connfd,"zexist k2","NO EXIST\n","exist name");
 
     // btree
-    test_case(connfd,"bset k2 v2","OK\n","set name");
-    test_case(connfd,"bcount","1\n","count");
-    test_case(connfd,"bget k2","v2\n","get name");
-    test_case(connfd,"bdelete k2","OK\n","delete name");
-    test_case(connfd,"bexist k2","EXIST\n","exist name");
+    // test_case(connfd,"bset k2 v2","OK\n","set name");
+    // test_case(connfd,"bcount","1\n","count");
+    // test_case(connfd,"bget k2","v2\n","get name");
+    // test_case(connfd,"bexist k2","EXIST\n","exist name");
+    // test_case(connfd,"bdelete k2","OK\n","delete name");
+
 #endif
 
 #if ENABLE_ARRAY_TEST
