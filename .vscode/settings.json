@@ -3,6 +3,7 @@
         "nty_coroutine.h": "c",
         "kv_store.h": "c",
         "stdlib.h": "c",
-        "inet.h": "c"
+        "inet.h": "c",
+        "type_traits": "c"
     }
 }

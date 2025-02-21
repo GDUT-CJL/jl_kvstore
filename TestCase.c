@@ -8,9 +8,10 @@
 #include <sys/time.h>
 #define ENABLE_ARRAY_TEST   0
 #define ENABLE_RBTREE_TEST   0
-#define ENABLE_HASHTABLE_TEST   0
+#define ENABLE_HASHTABLE_TEST   1
 #define ENABLE_SKIPLIST_TEST   0
 #define ENABLE_BTREE_TEST       0
+#define ENABLE_DHASH_TEST       1
 #define ENABLE_LOG   1
 
 #define MAX_REQUEST_NUM			100000
@@ -68,7 +69,7 @@ int recv_msg(int connfd, char* msg){
 
 int equal(char* res,char* pattern,char* casename){
     if(strcmp(res,pattern) == 0){
-        LOG("PASS -----> '%s'\n",casename);
+        //LOG("PASS -----> '%s'\n",casename);
     }else{
         LOG("NO PASS -----> %s != %s\n",res,pattern);
     }
@@ -128,6 +129,15 @@ void btree_connect_10w(int connfd){
     }
 }
 
+void dhash_connect_10w(int connfd){
+    int i;
+    for(i = 0; i < MAX_REQUEST_NUM ; ++i){
+        char msg[512] = {0};
+        snprintf(msg,512,"hset key%d value%d",i,i);
+        test_case(connfd,msg,"OK\n","SetName");
+    }
+}
+
 int main(int argc,char *argv[])
 {
     assert(argc == 3);
@@ -142,11 +152,11 @@ int main(int argc,char *argv[])
     
 #if 1
     // array
-    test_case(connfd,"set k2 v2","OK\n","set name");
-    test_case(connfd,"count","1\n","count");
-    test_case(connfd,"get k2","v2\n","get name");
-    test_case(connfd,"delete k2","OK\n","delete name");
-    test_case(connfd,"exist k2","NO EXIST\n","exist name");
+    // test_case(connfd,"set k2 v2","OK\n","set name");
+    // test_case(connfd,"count","1\n","count");
+    // test_case(connfd,"get k2","v2\n","get name");
+    // test_case(connfd,"delete k2","OK\n","delete name");
+    // test_case(connfd,"exist k2","NO EXIST\n","exist name");
 
     // // rbtree
     // test_case(connfd,"rset k2 v2","OK\n","set name");
@@ -175,6 +185,13 @@ int main(int argc,char *argv[])
     // test_case(connfd,"bget k2","v2\n","get name");
     // test_case(connfd,"bexist k2","EXIST\n","exist name");
     // test_case(connfd,"bdelete k2","OK\n","delete name");
+
+    // Dhashtable
+    // test_case(connfd,"dset k2 v2","OK\n","set name");
+    // test_case(connfd,"dcount","1\n","count");
+    // test_case(connfd,"dget k2","v2\n","get name");
+    // test_case(connfd,"ddelete k2","OK\n","delete name");
+    // test_case(connfd,"dexist k2","NO EXIST\n","exist name");
 
 #endif
 
@@ -226,6 +243,16 @@ int main(int argc,char *argv[])
     gettimeofday(&btree_end,NULL);
     double btree_time_used = TIME_SUB_MS(btree_end,btree_begin);
     LOG("skiplist used time:%f ms,qps: %.2f\n",btree_time_used,MAX_REQUEST_NUM / (btree_time_used / 1000));
+#endif
+
+#if ENABLE_DHASH_TEST
+    struct timeval dhash_begin;
+    gettimeofday(&dhash_begin,NULL);
+    array_connect_10w(connfd);
+    struct timeval dhash_end;
+    gettimeofday(&dhash_end,NULL);
+    double dhash_time_used = TIME_SUB_MS(dhash_end,dhash_begin);
+    LOG("dhash used time:%f ms,qps: %.2f\n",dhash_time_used,MAX_REQUEST_NUM / (dhash_time_used / 1000));
 #endif
     close(connfd);
 }

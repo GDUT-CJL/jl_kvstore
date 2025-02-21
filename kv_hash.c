@@ -1,15 +1,24 @@
 #include "kv_store.h"
-int _hash(char* key,int size){
-    if(!key)    return -1;
-    int sum = 0;
-    int i = 0;
-    while(key[i] != 0){
-        sum += key[i];
-        i++;
-    }
 
-    return sum % size;
+// djb2哈希算法
+static unsigned long _hash(const char *key, int capacity) {
+    unsigned long hash = 5381;
+    int c;
+    while ((c = *key++))
+        hash = ((hash << 5) + hash) + c; // hash * 33 + c
+    return hash % capacity;
 }
+// int _hash(char* key,int size){
+//     if(!key)    return -1;
+//     int sum = 0;
+//     int i = 0;
+//     while(key[i] != 0){
+//         sum += key[i];
+//         i++;
+//     }
+
+//     return sum % size;
+// }
 
 hashnode_t* _createNode(char* key,char* value){
     hashnode_t* node = (hashnode_t*)kvs_malloc(sizeof(hashnode_t));

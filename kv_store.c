@@ -2,6 +2,8 @@
 // gcc kv_store.c kv_array.c kv_rbtree.c -o kvstore -I ./NtyCo/core/ -L ./NtyCo/ -lntyco -lpthread -ldl
 // gcc kv_store.c kv_array.c kv_rbtree.c kv_hash.c -o kvstore -I ./NtyCo/core/ -L ./NtyCo/ -lntyco -lpthread -ldl
 // gcc kv_store.c kv_array.c kv_rbtree.c kv_hash.c kv_btree.c kv_skiplist.c -o kvstore -I ./NtyCo/core/ -L ./NtyCo/ -lntyco -lpthread -ldl
+
+// gcc kv_store.c kv_array.c kv_rbtree.c kv_hash.c kv_btree.c kv_skiplist.c kv_dhash.c -o kvstore -I ./NtyCo/core/ -L ./NtyCo/ -lntyco -lpthread -ldl
 #include <arpa/inet.h>
 #include "nty_coroutine.h"
 #include "kv_store.h"
@@ -42,12 +44,20 @@ typedef enum kvs_cmd_e{
 	KV_CMD_HCOUNT,
 	KV_CMD_HDELETE,
 	KV_CMD_HEXIST,
+
 	// skiptable
 	KV_CMD_ZSET,
 	KV_CMD_ZGET,
 	KV_CMD_ZCOUNT,
 	KV_CMD_ZDELETE,
 	KV_CMD_ZEXIST,
+
+	// skiptable
+	KV_CMD_DSET,
+	KV_CMD_DGET,
+	KV_CMD_DCOUNT,
+	KV_CMD_DDELETE,
+	KV_CMD_DEXIST,
 
 	KV_CMD_ERROR,
 	KV_CMD_QUIT,
@@ -59,14 +69,15 @@ const char* commands[] = {
 	"RSET","RGET","RCOUNT","RDELETE","REXIST",
 	"BSET","BGET","BCOUNT","BDELETE","BEXIST",
 	"HSET","HGET","HCOUNT","HDELETE","HEXIST",
-	"ZSET","ZGET","ZCOUNT","ZDELETE","ZEXIST"
+	"ZSET","ZGET","ZCOUNT","ZDELETE","ZEXIST",
+	"DSET","DGET","DCOUNT","DDELETE","DEXIST",
 };
 #define MAX_TOKENS 		32
 
 int kvs_parser_protocol(char *msg,char**buf,int count){
 	if(buf == NULL || buf[0] == NULL || count == 0) return KV_CMD_ERROR;
 	int cmd = KV_CMD_START;
-	for(cmd = KV_CMD_START;cmd <= KV_CMD_ZEXIST;cmd++){
+	for(cmd = KV_CMD_START;cmd <= KV_CMD_DEXIST;cmd++){
 		if(0 == strcasecmp(buf[0],commands[cmd])){
 			//printf("%d %s\n",cmd,commands[cmd]);
 			break;
@@ -220,7 +231,6 @@ int kvs_parser_protocol(char *msg,char**buf,int count){
 		memset(msg,0,MAX_MSGBUFFER_LENGTH);
 		if(ret == 0){
 			snprintf(msg,MAX_MSGBUFFER_LENGTH,"OK\n");
-			printf("%s",msg);
 		}
 		else{
 			snprintf(msg,MAX_MSGBUFFER_LENGTH,"FAILED\n");
@@ -234,7 +244,6 @@ int kvs_parser_protocol(char *msg,char**buf,int count){
 		memset(msg,0,MAX_MSGBUFFER_LENGTH);
 		if(value){
 			snprintf(msg,MAX_MSGBUFFER_LENGTH,"%s\n",value);
-			printf("%s",msg);
 		}
 		else{
 			snprintf(msg,MAX_MSGBUFFER_LENGTH,"NO EXIST\n");
@@ -247,7 +256,6 @@ int kvs_parser_protocol(char *msg,char**buf,int count){
 		memset(msg,0,MAX_MSGBUFFER_LENGTH);
 		int count = kvs_btree_count(&kv_b);
 		snprintf(msg,MAX_MSGBUFFER_LENGTH,"%d\n",count);
-		printf("%s",msg);
 		break;
 	}
 	case KV_CMD_BDELETE:
@@ -257,8 +265,6 @@ int kvs_parser_protocol(char *msg,char**buf,int count){
 		memset(msg,0,MAX_MSGBUFFER_LENGTH);
 		if(ret == 0){
 			snprintf(msg,MAX_MSGBUFFER_LENGTH,"OK\n");
-			printf("%s",msg);
-
 		}
 		else{
 			snprintf(msg,MAX_MSGBUFFER_LENGTH,"NO EXIST\n");
@@ -272,7 +278,6 @@ int kvs_parser_protocol(char *msg,char**buf,int count){
 		memset(msg,0,MAX_MSGBUFFER_LENGTH);
 		if(ret == 0){
 			snprintf(msg,MAX_MSGBUFFER_LENGTH,"EXIST\n");
-			printf("%s",msg);
 		}
 		else{
 			snprintf(msg,MAX_MSGBUFFER_LENGTH,"NO EXIST\n");
@@ -400,6 +405,66 @@ int kvs_parser_protocol(char *msg,char**buf,int count){
 		}
 		break;
 	}
+	case KV_CMD_DSET:
+	{
+		assert(count == 3);
+		int ret = kvs_dhash_set(&dhash,buf[1],buf[2]);
+		memset(msg,0,MAX_MSGBUFFER_LENGTH);
+		if(ret == 0){
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"OK\n");
+		}
+		else{
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"FAILED\n");
+		}
+		break;
+	}
+	case KV_CMD_DGET:
+	{
+		assert(count == 2);
+		char* value = kvs_dhash_get(&dhash,buf[1]);
+		memset(msg,0,MAX_MSGBUFFER_LENGTH);
+		if(value){
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"%s\n",value);
+		}
+		else{
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"NO EXIST\n");
+		}
+		break;
+	}
+	case KV_CMD_DCOUNT:
+	{
+		assert(count == 1);
+		memset(msg,0,MAX_MSGBUFFER_LENGTH);
+		int count = kvs_dhash_count(&dhash);
+		snprintf(msg,MAX_MSGBUFFER_LENGTH,"%d\n",count);
+		break;
+	}
+	case KV_CMD_DDELETE:
+	{
+		assert(count == 2);
+		int ret = kvs_dhash_delete(&dhash,buf[1]);
+		memset(msg,0,MAX_MSGBUFFER_LENGTH);
+		if(ret == 0){
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"OK\n");
+		}
+		else{
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"NO EXIST\n");
+		}
+		break;
+	}
+	case KV_CMD_DEXIST:
+	{
+		assert(count == 2);
+		int ret = kvs_dhash_exist(&dhash,buf[1]);
+		memset(msg,0,MAX_MSGBUFFER_LENGTH);
+		if(ret == 0){
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"EXIST\n");
+		}
+		else{
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"NO EXIST\n");
+		}
+		break;
+	}
 	default:
 		break;
 	}
@@ -420,9 +485,9 @@ int kvs_protocol(char* msg,int length){
 	// 分割
 	char* tokens[MAX_TOKENS] = {0};
 	int count = kvs_split_str(tokens,msg);
-	for(int i = 0; i < count; i++){
-		printf("%s\n",tokens[i]);
-	}
+	// for(int i = 0; i < count; i++){
+	// 	printf("%s\n",tokens[i]);
+	// }
 	// 解析
 	return kvs_parser_protocol(msg,tokens,count);
 }
@@ -502,6 +567,7 @@ int InitEngine(){
 	init_hashtable();
 	initSkipTable();
 	initBtree(&kv_b,6);
+	dhash_table_init(&dhash,DHASH_INIT_TABLE_SIZE);
 }
 
 void destoryEngine(){
@@ -509,6 +575,7 @@ void destoryEngine(){
 	destRbtree();
 	skiplist_desy();
 	btree_destroy(&kv_b);
+	dhash_table_desy(&dhash);
 }
 
 int main(int argc, char *argv[]) {
