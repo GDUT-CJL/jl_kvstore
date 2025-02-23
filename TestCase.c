@@ -8,18 +8,19 @@
 #include <sys/time.h>
 #define ENABLE_ARRAY_TEST   0
 #define ENABLE_RBTREE_TEST   0
-#define ENABLE_HASHTABLE_TEST   1
+#define ENABLE_HASHTABLE_TEST   0
 #define ENABLE_SKIPLIST_TEST   0
 #define ENABLE_BTREE_TEST       0
-#define ENABLE_DHASH_TEST       1
+#define ENABLE_DHASH_TEST       0
+
+
 #define ENABLE_LOG   1
 
 #define MAX_REQUEST_NUM			100000
 #define TIME_SUB_MS(tv1, tv2)  ((tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000)
 
-#if ENABLE_LOG
 #define LOG(_fmt, ...) fprintf(stdout, "[%s:%d] " _fmt, __FILE__, __LINE__, __VA_ARGS__)
-#endif
+
 
 #define MAX_BUFFER_SIZE     1024
 char buffer[MAX_BUFFER_SIZE] = {0};
@@ -69,9 +70,13 @@ int recv_msg(int connfd, char* msg){
 
 int equal(char* res,char* pattern,char* casename){
     if(strcmp(res,pattern) == 0){
-        //LOG("PASS -----> '%s'\n",casename);
+        #if ENABLE_LOG
+        LOG("PASS -----> '%s'\n",casename);
+        #endif
     }else{
+        #if ENABLE_LOG
         LOG("NO PASS -----> %s != %s\n",res,pattern);
+        #endif
     }
 }
 
@@ -152,46 +157,46 @@ int main(int argc,char *argv[])
     
 #if 1
     // array
-    // test_case(connfd,"set k2 v2","OK\n","set name");
-    // test_case(connfd,"count","1\n","count");
-    // test_case(connfd,"get k2","v2\n","get name");
-    // test_case(connfd,"delete k2","OK\n","delete name");
-    // test_case(connfd,"exist k2","NO EXIST\n","exist name");
+    test_case(connfd,"set k2 v2","OK\n","set name");
+    test_case(connfd,"count","1\n","count");
+    test_case(connfd,"get k2","v2\n","get name");
+    test_case(connfd,"delete k2","OK\n","delete name");
+    test_case(connfd,"exist k2","NO EXIST\n","exist name");
 
     // // rbtree
-    // test_case(connfd,"rset k2 v2","OK\n","set name");
-    // test_case(connfd,"rcount","1\n","count");
-    // test_case(connfd,"rget k2","v2\n","get name");
-    // test_case(connfd,"rdelete k2","OK\n","delete name");
-    // test_case(connfd,"rexist k2","NO EXIST\n","exist name");
+    test_case(connfd,"rset k2 v2","OK\n","set name");
+    test_case(connfd,"rcount","1\n","count");
+    test_case(connfd,"rget k2","v2\n","get name");
+    test_case(connfd,"rdelete k2","OK\n","delete name");
+    test_case(connfd,"rexist k2","NO EXIST\n","exist name");
 
     // // hashtable
-    // test_case(connfd,"hset k2 v2","OK\n","set name");
-    // test_case(connfd,"hcount","1\n","count");
-    // test_case(connfd,"hget k2","v2\n","get name");
-    // test_case(connfd,"hdelete k2","OK\n","delete name");
-    // test_case(connfd,"hexist k2","NO EXIST\n","exist name");
+    test_case(connfd,"hset k2 v2","OK\n","set name");
+    test_case(connfd,"hcount","1\n","count");
+    test_case(connfd,"hget k2","v2\n","get name");
+    test_case(connfd,"hdelete k2","OK\n","delete name");
+    test_case(connfd,"hexist k2","NO EXIST\n","exist name");
 
     // // skiplist
-    // test_case(connfd,"zset k2 v2","OK\n","set name");
-    // test_case(connfd,"zcount","1\n","count");
-    // test_case(connfd,"zget k2","v2\n","get name");
-    // test_case(connfd,"zdelete k2","OK\n","delete name");
-    // test_case(connfd,"zexist k2","NO EXIST\n","exist name");
+    test_case(connfd,"zset k2 v2","OK\n","set name");
+    test_case(connfd,"zcount","1\n","count");
+    test_case(connfd,"zget k2","v2\n","get name");
+    test_case(connfd,"zdelete k2","OK\n","delete name");
+    test_case(connfd,"zexist k2","NO EXIST\n","exist name");
 
     // btree
-    // test_case(connfd,"bset k2 v2","OK\n","set name");
-    // test_case(connfd,"bcount","1\n","count");
-    // test_case(connfd,"bget k2","v2\n","get name");
-    // test_case(connfd,"bexist k2","EXIST\n","exist name");
-    // test_case(connfd,"bdelete k2","OK\n","delete name");
+    test_case(connfd,"bset k2 v2","OK\n","set name");
+    test_case(connfd,"bcount","1\n","count");
+    test_case(connfd,"bget k2","v2\n","get name");
+    test_case(connfd,"bexist k2","EXIST\n","exist name");
+    test_case(connfd,"bdelete k2","OK\n","delete name");
 
     // Dhashtable
-    // test_case(connfd,"dset k2 v2","OK\n","set name");
-    // test_case(connfd,"dcount","1\n","count");
-    // test_case(connfd,"dget k2","v2\n","get name");
-    // test_case(connfd,"ddelete k2","OK\n","delete name");
-    // test_case(connfd,"dexist k2","NO EXIST\n","exist name");
+    test_case(connfd,"dset k2 v2","OK\n","set name");
+    test_case(connfd,"dcount","1\n","count");
+    test_case(connfd,"dget k2","v2\n","get name");
+    test_case(connfd,"ddelete k2","OK\n","delete name");
+    test_case(connfd,"dexist k2","NO EXIST\n","exist name");
 
 #endif
 

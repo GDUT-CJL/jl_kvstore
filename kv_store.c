@@ -2,20 +2,22 @@
 // gcc kv_store.c kv_array.c kv_rbtree.c -o kvstore -I ./NtyCo/core/ -L ./NtyCo/ -lntyco -lpthread -ldl
 // gcc kv_store.c kv_array.c kv_rbtree.c kv_hash.c -o kvstore -I ./NtyCo/core/ -L ./NtyCo/ -lntyco -lpthread -ldl
 // gcc kv_store.c kv_array.c kv_rbtree.c kv_hash.c kv_btree.c kv_skiplist.c -o kvstore -I ./NtyCo/core/ -L ./NtyCo/ -lntyco -lpthread -ldl
-
 // gcc kv_store.c kv_array.c kv_rbtree.c kv_hash.c kv_btree.c kv_skiplist.c kv_dhash.c -o kvstore -I ./NtyCo/core/ -L ./NtyCo/ -lntyco -lpthread -ldl
+
+// gcc kv_store.c kv_array.c kv_rbtree.c kv_hash.c kv_btree.c kv_skiplist.c kv_dhash.c jl_Mempool.c -o kvstore -I ./NtyCo/core/ -L ./NtyCo/ -lntyco -lpthread -ldl
 #include <arpa/inet.h>
 #include "nty_coroutine.h"
 #include "kv_store.h"
 
 #define MAX_CLIENT_NUM			1000000
 #define TIME_SUB_MS(tv1, tv2)  ((tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000)
+#define JL_MEMPOOL_SIZE		1 << 12
 void* kvs_malloc(size_t size){
-	return malloc(size);
+	return jl_alloc(p,size);
 }
 
 void kvs_free(void* ptr){
-	return free(ptr);
+	return jl_free(p,ptr);
 }
 
 typedef enum kvs_cmd_e{
@@ -563,6 +565,9 @@ void server(void *arg) {
 }
 
 int InitEngine(){
+	p = jl_create_pool(JL_MEMPOOL_SIZE);
+	if(p == NULL)	return -1;
+
 	initRbtree();
 	init_hashtable();
 	initSkipTable();
@@ -576,19 +581,24 @@ void destoryEngine(){
 	skiplist_desy();
 	btree_destroy(&kv_b);
 	dhash_table_desy(&dhash);
+
+	jl_destory_pool(p);
 }
 
 int main(int argc, char *argv[]) {
+
 	InitEngine();
 	nty_coroutine *co = NULL;
-
 	int i = 0;
 	//unsigned short base_port = 9096;
 	unsigned short *port = calloc(1, sizeof(unsigned short));
 	*port = 8000;
+
 	nty_coroutine_create(&co, server, port); ////////no run
 	nty_schedule_run(); //run
 	destoryEngine();
+
+
 	return 0;
 }
 

@@ -4,6 +4,9 @@
         "kv_store.h": "c",
         "stdlib.h": "c",
         "inet.h": "c",
-        "type_traits": "c"
+        "type_traits": "c",
+        "jl_mempool.h": "c",
+        "string.h": "c",
+        "stdint.h": "c"
     }
 }

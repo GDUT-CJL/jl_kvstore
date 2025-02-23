@@ -33,7 +33,6 @@ static dhash_node_t* _create_node(char* key, char* value){
 
     node->key = kcopy;
     node->value = vcopy;
-    node->next = NULL;
 
     return node;
 }
