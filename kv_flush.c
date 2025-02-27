@@ -1,6 +1,6 @@
 #include "kv_store.h"
 int flush_array() {
-    FILE* file = fopen(PATH_TO_FLUSH_DISK, "w");
+    FILE* file = fopen(PATH_TO_FLUSH_DISK, "a");
     if (!file) {
         perror("Failed to open file");
         return -1;
@@ -92,6 +92,12 @@ int flush_skiplist(){
 }
 
 void kv_flush_to_disk(){
+    FILE* file = fopen(PATH_TO_FLUSH_DISK, "w");
+    if(file == NULL){
+        perror("fopen");
+        return;
+    }
+    if(file)
     flush_array();
     flush_hash();
     flush_btree();

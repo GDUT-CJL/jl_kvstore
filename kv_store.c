@@ -54,7 +54,7 @@ typedef enum kvs_cmd_e{
 	KV_CMD_ZDELETE,
 	KV_CMD_ZEXIST,
 
-	// skiptable
+	// dhash
 	KV_CMD_DSET,
 	KV_CMD_DGET,
 	KV_CMD_DCOUNT,
@@ -586,9 +586,7 @@ void destoryEngine(){
 	jl_destory_pool(p);
 }
 
-int main(int argc, char *argv[]) {
-
-	InitEngine();
+int start_coroutine(){
 	nty_coroutine *co = NULL;
 	int i = 0;
 	//unsigned short base_port = 9096;
@@ -599,6 +597,12 @@ int main(int argc, char *argv[]) {
 	nty_schedule_run(); //run
 	destoryEngine();
 
+}
+
+
+int main(int argc, char *argv[]) {
+	InitEngine();
+	start_coroutine();
 
 	return 0;
 }

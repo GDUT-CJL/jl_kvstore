@@ -10,6 +10,7 @@ static unsigned long _hash(const char *key, int capacity) {
     return hash % capacity;
 }
 
+// 创建一个哈希节点
 static dhash_node_t* _create_node(char* key, char* value){
     dhash_node_t* node = (dhash_node_t*)malloc(sizeof(dhash_node_t));
     if(node == NULL)    return NULL;
@@ -36,7 +37,7 @@ static dhash_node_t* _create_node(char* key, char* value){
 
     return node;
 }
-
+// 销毁一个哈希节点
 static int dhash_node_desy(dhash_node_t* node){
     if(node == NULL) return -1;
     if(node->key){
@@ -52,12 +53,13 @@ static int dhash_node_desy(dhash_node_t* node){
     return 0;
 }
 
+// 初始化哈希列表
 int dhash_table_init(dhash_table_t* dhash, int capacity){
     if(dhash == NULL)   return -1;
     dhash->buckets = (dhash_node_t**)calloc(capacity,sizeof(dhash_node_t));
     if(dhash->buckets == NULL)  return -1;
     dhash->capacity = capacity;
-    dhash->size = 0;
+    dhash->count = 0;
     return 0;
 }
 
@@ -67,7 +69,7 @@ int dhash_table_desy(dhash_table_t* dhash){
         while(dhash->buckets[i] != NULL){
             int ret = dhash_node_desy(dhash->buckets[i]);
             if(ret == -1)   return -1;
-            dhash->size--;
+            dhash->count--;
         }
     }
     if(dhash->buckets) {
@@ -75,7 +77,7 @@ int dhash_table_desy(dhash_table_t* dhash){
         dhash->buckets = NULL;
     }
     dhash->capacity = 0;
-    dhash->size = 0;
+    dhash->count = 0;
     free(dhash);
 }
 
@@ -83,7 +85,7 @@ int kvs_dhash_set(dhash_table_t* dhash, char* key, char* value) {
     if (dhash == NULL || key == NULL || value == NULL) return -1;  
 
     // 计算负载因子并扩容  
-    if (dhash->size >= (dhash->capacity * 0.75)) {  
+    if (dhash->count >= (dhash->capacity * 0.75)) {  
         dhash_table_t new_table;  
         if (dhash_table_init(&new_table, dhash->capacity * DHASH_GROW_FACTOR) != 0) return -1;  
 
@@ -103,17 +105,19 @@ int kvs_dhash_set(dhash_table_t* dhash, char* key, char* value) {
         free(dhash->buckets);  
         dhash->buckets = new_table.buckets;  
         dhash->capacity = new_table.capacity;  
-        dhash->size = new_table.size;  
+        dhash->count = new_table.count;  
         new_table.buckets = NULL; // 避免释放时重复释放  
     }  
 
     // 计算插入索引  
-    int idx = _hash(key, dhash->capacity);  
+    int idx = _hash(key, dhash->capacity);
+    int step = 1 + (_hash(key, dhash->capacity - 1)); // 计算步长   
     while (dhash->buckets[idx] != NULL) {  
         if (strcmp(dhash->buckets[idx]->key, key) == 0) {  
             return -1; // 已经存在  
         }  
-        idx = (idx + 1) % dhash->capacity; // 线性探测  
+        //idx = (idx + 1) % dhash->capacity; // 线性探测  
+        idx = (idx + step) % dhash->capacity; // 使用双重哈希处理冲突  
     }  
 
     // 创建新节点并插入  
@@ -122,7 +126,7 @@ int kvs_dhash_set(dhash_table_t* dhash, char* key, char* value) {
         return -1; // 节点创建失败  
     }  
 
-    dhash->size++; // 增加大小计数  
+    dhash->count++; // 增加大小计数  
     return 0; // 成功  
 }
 
@@ -159,7 +163,7 @@ int kvs_dhash_delete(dhash_table_t* dhash,char* key){
     // 首先看看是否需要缩减哈希表
     // 存储元素小于1/4空间，按照“增长因子DHASH_GROW_FACTOR”缩减
     int idx = _hash(key,dhash->capacity);
-    if(dhash->capacity > DHASH_INIT_TABLE_SIZE && dhash->size < (dhash->capacity>>4)){
+    if(dhash->capacity > DHASH_INIT_TABLE_SIZE && dhash->count < (dhash->capacity>>4)){
         dhash_table_t new_table;
         int ret = dhash_table_init(&new_table, dhash->capacity/DHASH_GROW_FACTOR);
         if(ret != 0) return -1;
@@ -170,7 +174,7 @@ int kvs_dhash_delete(dhash_table_t* dhash,char* key){
             }
         }
         dhash->capacity = dhash->capacity / DHASH_GROW_FACTOR;
-        dhash->size = new_table.size;
+        dhash->count = new_table.count;
         dhash_node_t** tmp = dhash->buckets;
         dhash->buckets = new_table.buckets;
         new_table.buckets = tmp;
@@ -182,14 +186,14 @@ int kvs_dhash_delete(dhash_table_t* dhash,char* key){
     if(node){
         int ret = dhash_node_desy(node);
         if(ret != 0)    return -1;
-        dhash->size--;
+        dhash->count--;
         return 0;
     }
     return -1;
 } 
 
 int kvs_dhash_count(dhash_table_t* dhash){
-    return dhash->size;
+    return dhash->count;
 }
 
 #if 0

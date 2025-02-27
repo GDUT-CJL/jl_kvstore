@@ -16,7 +16,7 @@
 
 #define ENABLE_LOG   0
 
-#define MAX_REQUEST_NUM			100000
+#define MAX_REQUEST_NUM			10000
 #define TIME_SUB_MS(tv1, tv2)  ((tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000)
 
 #define LOG(_fmt, ...) fprintf(stdout, "[%s:%d] " _fmt, __FILE__, __LINE__, __VA_ARGS__)
@@ -260,7 +260,7 @@ int main(int argc,char *argv[])
     struct timeval btree_end;
     gettimeofday(&btree_end,NULL);
     double btree_time_used = TIME_SUB_MS(btree_end,btree_begin);
-    LOG("skiplist used time:%f ms,qps: %.2f\n",btree_time_used,MAX_REQUEST_NUM / (btree_time_used / 1000));
+    LOG("btree used time:%f ms,qps: %.2f\n",btree_time_used,MAX_REQUEST_NUM / (btree_time_used / 1000));
 #endif
 
 #if ENABLE_DHASH_TEST

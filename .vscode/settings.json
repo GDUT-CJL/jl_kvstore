@@ -10,6 +10,8 @@
         "stdint.h": "c",
         "kv_rbtree.h": "c",
         "kv_hash.h": "c",
-        "atomic": "cpp"
+        "atomic": "cpp",
+        "jl_thrdpool.h": "c",
+        "pthread.h": "c"
     }
 }

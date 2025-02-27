@@ -1,28 +1,4 @@
 #include "jl_Thrdpool.h"
-#include <pthread.h>
-#include "spinlock.h"
-
-typedef struct task_s{
-    void* next;
-    callback cb;
-    void* arg;
-}task_t;
-
-typedef struct queue_s{
-    void* head;
-    void** tail;
-    int block;
-    pthread_mutex_t mutex;
-    pthread_cond_t cond;
-    struct spinlock splock;
-}queue_t;
-
-typedef struct thrdpool_s{
-    queue_t* queue;
-    int count;
-    atomic_int quit;
-    pthread_t* pthreads;
-}thrdpool_t;
 
 queue_t* _create_taskQ(){
     queue_t* queue = (queue_t*)malloc(sizeof(queue_t));
@@ -55,8 +31,9 @@ void _push_task(queue_t* queue,void* task){
     void** link = (void**) task;
     *link = NULL;
     spinlock_lock(&queue->splock);
-    queue->tail = link;
-    *queue->tail = link;
+    // 下面这两个顺序不能搞反了
+    *queue->tail = link; //先让最后一位指向空
+    queue->tail = link; // 再让尾指针指向最后一位
     spinlock_unlock(&queue->splock);
     pthread_cond_signal(&queue->cond);
 }
@@ -65,11 +42,12 @@ task_t* _pop_task(queue_t* queue){
     spinlock_lock(&queue->splock);
     if(queue->head == NULL){
         spinlock_unlock(&queue->splock);
+        return NULL;
     }
     task_t* task;
     task = queue->head;
     void** link = (void**)task;
-    queue->head = task;
+    queue->head = *link;
     if(queue->head == NULL){
         queue->tail = &queue->head;
     }
@@ -107,8 +85,12 @@ void* do_work(void* arg){
     thrdpool_t* pool = (thrdpool_t*)arg;
     while(atomic_load(&pool->quit) == 0){
         task_t* task = _get_task(pool->queue);
-        task->cb(task->arg);
+        if (task) {  // 确保 task 不为 NULL
+            task->cb(task->arg);
+            free(task);  // 任务执行完毕后释放内存
+        }
     }
+    return NULL;
 }
 
 void _destory_threads(thrdpool_t* pool){
@@ -136,6 +118,7 @@ int _create_threads(thrdpool_t* pool,int count){
         return 0;
     }else{
         _destory_threads(pool);
+        free(pool->pthreads);
         free(pool->queue);
     }
 }
@@ -185,8 +168,55 @@ void thrdpool_waitdone(thrdpool_t *pool){
     free(pool);
 }
 
-int main(){
-    thrdpool_t* pool = create_thrdpool(2);
+/*-------------------------------------------------------------------------------------------*/
 
-    return 0;
+#if 0
+int done = 0;
+
+pthread_mutex_t lock;
+
+void do_taskA(void *arg) {
+    thrdpool_t *pool = (thrdpool_t*)arg;
+    pthread_mutex_lock(&lock);
+    done++;
+    printf("doing A task\n");
+    pthread_mutex_unlock(&lock);
+    if (done >= 1000) {
+        destory_pool(pool);
+    }
 }
+void do_taskB(void *arg) {
+    thrdpool_t *pool = (thrdpool_t*)arg;
+    pthread_mutex_lock(&lock);
+    done++;
+    printf("doing B task\n");
+    pthread_mutex_unlock(&lock);
+    if (done >= 1000) {
+        destory_pool(pool);
+    }
+}
+
+int main(){
+    int threads = 8;
+    pthread_mutex_init(&lock, NULL);// 初始化
+    thrdpool_t *pool = create_thrdpool(threads);
+    if (pool == NULL) {
+        perror("thread pool create error!\n");
+        exit(-1);
+    }
+
+    // for (int i = 0; i < 1000; i++) {  // 限制任务数量
+    //     if (post_threadTask(pool, &do_task, pool) != 0) {
+    //         break;
+    //     }
+    // }
+        if (post_threadTask(pool, &do_taskA, pool) != 0) {
+            return -1;
+        }    
+        if (post_threadTask(pool, &do_taskB, pool) != 0) {
+            return -1;
+        }   
+    thrdpool_waitdone(pool);
+    pthread_mutex_destroy(&lock);
+}
+#endif
