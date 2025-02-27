@@ -4,7 +4,7 @@
 // gcc kv_store.c kv_array.c kv_rbtree.c kv_hash.c kv_btree.c kv_skiplist.c -o kvstore -I ./NtyCo/core/ -L ./NtyCo/ -lntyco -lpthread -ldl
 // gcc kv_store.c kv_array.c kv_rbtree.c kv_hash.c kv_btree.c kv_skiplist.c kv_dhash.c -o kvstore -I ./NtyCo/core/ -L ./NtyCo/ -lntyco -lpthread -ldl
 
-// gcc kv_store.c kv_array.c kv_rbtree.c kv_hash.c kv_btree.c kv_skiplist.c kv_dhash.c jl_Mempool.c -o kvstore -I ./NtyCo/core/ -L ./NtyCo/ -lntyco -lpthread -ldl
+// gcc kv_store.c kv_array.c kv_rbtree.c kv_hash.c kv_btree.c kv_skiplist.c kv_dhash.c jl_Mempool.c kv_flush.c -o kvstore -I ./NtyCo/core/ -L ./NtyCo/ -lntyco -lpthread -ldl
 #include <arpa/inet.h>
 #include "nty_coroutine.h"
 #include "kv_store.h"
@@ -506,6 +506,7 @@ void server_reader(void *arg) {
 		ret = recv(fd, buf, MAX_MSGBUFFER_LENGTH, 0);
 		if (ret > 0) {
 			kvs_protocol(buf,ret);
+    		kv_flush_to_disk();
 			ret = send(fd, buf, strlen(buf), 0);
 			if (ret == -1) {
 				close(fd);

@@ -36,8 +36,8 @@ hashnode_t* _createNode(char* key,char* value){
         kvs_free(node);
         return NULL;
     }
-    strcpy(node->key,key); 
-    strcpy(node->value,value);
+    strncpy(node->key,key,strlen(key)+1); 
+    strncpy(node->value,value,strlen(key)+1);
 
     node->next = NULL;// 作为链表节点，这一步也很重要不要遗忘，方便以后添加
     return node; 

@@ -12,6 +12,7 @@ jl_create_pool(size_t size)
     p->d.end = (unsigned char*)p + size;
     p->d.next = NULL;
     p->d.failed = 0;
+    p->d.data_size = 0;
 
     size = size - sizeof(jl_pool_t);
     p->max = (size > JL_MAX_ALLOC_FROM_POOL) ? JL_MAX_ALLOC_FROM_POOL : size;
@@ -138,6 +139,7 @@ void* jl_alloc(jl_pool_t* pool,int size)
             if((size_t)(p->d.end - m) >= size)
             {
                 p->d.last = m + size;
+                p->d.data_size += size; // 更新有效数据大小
                 return m;
             }
             p = p->d.next;
@@ -148,6 +150,40 @@ void* jl_alloc(jl_pool_t* pool,int size)
     return jl_alloc_large(pool,size);
     
 }
+
+int jl_flush_to_disk(jl_pool_t* pool, const char* filename) {
+    FILE* file = fopen(filename, "w");
+    if (!file) {
+        perror("Failed to open file");
+        return -1;
+    }
+
+    // 遍历内存池中的所有数据块
+    for (jl_pool_t* p = pool; p; p = p->d.next) {
+        unsigned char* start = (unsigned char*)p + sizeof(struct jl_pool_s);
+        unsigned char* end = p->d.last;
+
+        // 写入有效数据
+        if (p->d.data_size > 0) {
+            fwrite(start, 1, p->d.data_size, file);
+            //fprintf(file, "%.*s", p->d.data_size, start);
+        }
+    }
+
+    // 遍历大内存块
+    for (jl_large_t* l = pool->large; l; l = l->next) {
+        if (l->alloc) {
+            // 假设大内存块的大小为 size（需要额外记录大小）
+            fwrite(l->alloc, 1, JL_MAX_POOLSIZE, file); // 需要记录大内存块的大小
+            //fprintf(file, "%.*s", JL_MAX_POOLSIZE, l->alloc);
+        }
+    }
+
+    fclose(file);
+    return 0;
+}
+
+
 
 void* jl_calloc(jl_pool_t* pool,int size)
 {

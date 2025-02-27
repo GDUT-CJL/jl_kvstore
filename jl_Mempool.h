@@ -23,6 +23,7 @@ typedef struct jl_data_s
     unsigned char* last;
     struct jl_pool_s* next;
     unsigned int failed;
+    size_t data_size;         // 有效数据大小
 }jl_data_t;
 
 typedef struct jl_pool_s
@@ -44,3 +45,4 @@ void* jl_alloc_large(struct jl_pool_s* pool,int size);
 void* jl_alloc(struct jl_pool_s* pool,int size);
 void* jl_calloc(jl_pool_t* pool,int size);
 void jl_free(jl_pool_t* pool,void* p);
+int jl_flush_to_disk(jl_pool_t* pool, const char* filename);

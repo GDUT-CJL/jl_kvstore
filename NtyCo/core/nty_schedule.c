@@ -357,8 +357,8 @@ void nty_schedule_run(void) {
 				}
 				nty_coroutine_resume(co);
 			}
-
 			is_eof = 0;
+			
 		}
 	}
 

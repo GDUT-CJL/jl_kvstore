@@ -7,6 +7,9 @@
         "type_traits": "c",
         "jl_mempool.h": "c",
         "string.h": "c",
-        "stdint.h": "c"
+        "stdint.h": "c",
+        "kv_rbtree.h": "c",
+        "kv_hash.h": "c",
+        "atomic": "cpp"
     }
 }

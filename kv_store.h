@@ -9,9 +9,11 @@
 #include "kv_skiplist.h"
 #include "kv_dhash.h"
 #include "jl_Mempool.h"
-
+#include "jl_Mempool.h"
+#define     PATH_TO_FLUSH_DISK      "kv_data.txt"
 void* kvs_malloc(size_t size);
 void kvs_free(void* ptr);
+void kv_flush_to_disk();
 #define ENABLE_LOG      1
 // LOG
 #if ENABLE_LOG
