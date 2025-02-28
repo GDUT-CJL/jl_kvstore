@@ -13,8 +13,9 @@
 #define     PATH_TO_FLUSH_DISK      "kv_data.txt"
 void* kvs_malloc(size_t size);
 void kvs_free(void* ptr);
-void kv_flush_to_disk();
+void kv_flush_thread(void* arg);
 #define ENABLE_LOG      1
+#define ENABLE_THRDPOOL 1
 // LOG
 #if ENABLE_LOG
 #define LOG(_fmt, ...) fprintf(stdout, "[%s:%d] " _fmt, __FILE__, __LINE__, __VA_ARGS__)

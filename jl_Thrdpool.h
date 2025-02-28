@@ -29,7 +29,7 @@ typedef struct thrdpool_s{
 // 创建线程池
 thrdpool_t* create_thrdpool(int thrd_count);
 // 销毁线程池
-void destory_pool(thrdpool_t* pool);
+void destroy_thrdpool(thrdpool_t* pool);
 // 添加任务
 int post_threadTask(thrdpool_t* pool,callback cb,void* arg);
 // 等待回收

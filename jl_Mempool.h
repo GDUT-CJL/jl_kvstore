@@ -37,8 +37,8 @@ typedef struct jl_pool_s
     //pthread_mutex_t lock;        // 互斥锁，用于线程安全
 }jl_pool_t;
 
-struct jl_pool_s* jl_create_pool(size_t size);
-void jl_destory_pool(struct jl_pool_s *pool);
+struct jl_pool_s* jl_create_mempool(size_t size);
+void jl_destory_mempool(struct jl_pool_s *pool);
 void jl_reset_pool(struct jl_pool_s *pool);
 void* jl_alloc_block(struct jl_pool_s* pool,int size);
 void* jl_alloc_large(struct jl_pool_s* pool,int size);

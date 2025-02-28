@@ -6,17 +6,17 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/time.h>
-#define ENABLE_ARRAY_TEST   1
+#define ENABLE_ARRAY_TEST   0
 #define ENABLE_RBTREE_TEST   0
 #define ENABLE_HASHTABLE_TEST   0
 #define ENABLE_SKIPLIST_TEST   0
 #define ENABLE_BTREE_TEST       0
-#define ENABLE_DHASH_TEST       0
+#define ENABLE_DHASH_TEST       1
 
 
 #define ENABLE_LOG   0
 
-#define MAX_REQUEST_NUM			10000
+#define MAX_REQUEST_NUM			50000
 #define TIME_SUB_MS(tv1, tv2)  ((tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000)
 
 #define LOG(_fmt, ...) fprintf(stdout, "[%s:%d] " _fmt, __FILE__, __LINE__, __VA_ARGS__)
@@ -120,7 +120,7 @@ void skiplist_connect_10w(int connfd){
     int i;
     for(i = 0; i < MAX_REQUEST_NUM ; ++i){
         char msg[512] = {0};
-        snprintf(msg,512,"hset key%d value%d",i,i);
+        snprintf(msg,512,"zset key%d value%d",i,i);
         test_case(connfd,msg,"OK\n","SetName");
     }
 }
@@ -138,7 +138,7 @@ void dhash_connect_10w(int connfd){
     int i;
     for(i = 0; i < MAX_REQUEST_NUM ; ++i){
         char msg[512] = {0};
-        snprintf(msg,512,"hset key%d value%d",i,i);
+        snprintf(msg,512,"dset key%d value%d",i,i);
         test_case(connfd,msg,"OK\n","SetName");
     }
 }
@@ -246,7 +246,7 @@ int main(int argc,char *argv[])
 #if ENABLE_SKIPLIST_TEST
     struct timeval skiplist_begin;
     gettimeofday(&skiplist_begin,NULL);
-    array_connect_10w(connfd);
+    skiplist_connect_10w(connfd);
     struct timeval skiplist_end;
     gettimeofday(&skiplist_end,NULL);
     double skiplist_time_used = TIME_SUB_MS(skiplist_end,skiplist_begin);
@@ -256,7 +256,7 @@ int main(int argc,char *argv[])
 #if ENABLE_BTREE_TEST
     struct timeval btree_begin;
     gettimeofday(&btree_begin,NULL);
-    array_connect_10w(connfd);
+    btree_connect_10w(connfd);
     struct timeval btree_end;
     gettimeofday(&btree_end,NULL);
     double btree_time_used = TIME_SUB_MS(btree_end,btree_begin);
@@ -266,7 +266,7 @@ int main(int argc,char *argv[])
 #if ENABLE_DHASH_TEST
     struct timeval dhash_begin;
     gettimeofday(&dhash_begin,NULL);
-    array_connect_10w(connfd);
+    dhash_connect_10w(connfd);
     struct timeval dhash_end;
     gettimeofday(&dhash_end,NULL);
     double dhash_time_used = TIME_SUB_MS(dhash_end,dhash_begin);

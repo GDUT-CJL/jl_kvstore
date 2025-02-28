@@ -3,8 +3,9 @@
 // gcc kv_store.c kv_array.c kv_rbtree.c kv_hash.c -o kvstore -I ./NtyCo/core/ -L ./NtyCo/ -lntyco -lpthread -ldl
 // gcc kv_store.c kv_array.c kv_rbtree.c kv_hash.c kv_btree.c kv_skiplist.c -o kvstore -I ./NtyCo/core/ -L ./NtyCo/ -lntyco -lpthread -ldl
 // gcc kv_store.c kv_array.c kv_rbtree.c kv_hash.c kv_btree.c kv_skiplist.c kv_dhash.c -o kvstore -I ./NtyCo/core/ -L ./NtyCo/ -lntyco -lpthread -ldl
-
 // gcc kv_store.c kv_array.c kv_rbtree.c kv_hash.c kv_btree.c kv_skiplist.c kv_dhash.c jl_Mempool.c kv_flush.c -o kvstore -I ./NtyCo/core/ -L ./NtyCo/ -lntyco -lpthread -ldl
+
+//gcc kv_store.c kv_array.c kv_rbtree.c kv_hash.c kv_btree.c kv_skiplist.c kv_dhash.c jl_Mempool.c kv_flush.c jl_Thrdpool.c -o kvstore -I ./NtyCo/core/ -L ./NtyCo/ -lntyco -lpthread -ldl
 #include <arpa/inet.h>
 #include "nty_coroutine.h"
 #include "kv_store.h"
@@ -506,7 +507,17 @@ void server_reader(void *arg) {
 		ret = recv(fd, buf, MAX_MSGBUFFER_LENGTH, 0);
 		if (ret > 0) {
 			kvs_protocol(buf,ret);
-    		kv_flush_to_disk();
+    		//kv_flush_to_disk();
+			// pthread_t flush_tid;  
+            // if (pthread_create(&flush_tid, NULL, kv_flush_thread, NULL) != 0) {  
+            //     perror("Failed to create flush thread");  
+            //     close(fd);  
+            //     break;  
+            // }  
+            // // 可以选择在这里分离线程，以便避免管理  
+            // pthread_detach(flush_tid);   
+
+			
 			ret = send(fd, buf, strlen(buf), 0);
 			if (ret == -1) {
 				close(fd);
@@ -566,7 +577,7 @@ void server(void *arg) {
 }
 
 int InitEngine(){
-	p = jl_create_pool(JL_MEMPOOL_SIZE);
+	p = jl_create_mempool(JL_MEMPOOL_SIZE);
 	if(p == NULL)	return -1;
 
 	initRbtree();
@@ -583,7 +594,8 @@ void destoryEngine(){
 	btree_destroy(&kv_b);
 	dhash_table_desy(&dhash);
 
-	jl_destory_pool(p);
+	jl_destory_mempool(p);
+
 }
 
 int start_coroutine(){
@@ -594,16 +606,22 @@ int start_coroutine(){
 	*port = 8000;
 
 	nty_coroutine_create(&co, server, port); ////////no run
+#if ENABLE_THRDPOOL
+	thrdpool_t* pool = create_thrdpool(1);
+	post_threadTask(pool,kv_flush_thread,NULL);
+#endif
 	nty_schedule_run(); //run
-	destoryEngine();
-
+	
+#if ENABLE_THRDPOOL
+	destroy_thrdpool(pool);
+#endif
 }
 
 
 int main(int argc, char *argv[]) {
 	InitEngine();
 	start_coroutine();
-
+	destoryEngine();
 	return 0;
 }
 

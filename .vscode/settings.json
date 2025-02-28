@@ -12,6 +12,7 @@
         "kv_hash.h": "c",
         "atomic": "cpp",
         "jl_thrdpool.h": "c",
-        "pthread.h": "c"
+        "pthread.h": "c",
+        "stdio.h": "c"
     }
 }

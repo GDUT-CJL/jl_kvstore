@@ -4,7 +4,7 @@
 
 
 struct jl_pool_s* 
-jl_create_pool(size_t size)
+jl_create_mempool(size_t size)
 {
     struct jl_pool_s* p;
     int ret = posix_memalign((void **)&p,JL_MP_ALIGNMENT,size);
@@ -23,7 +23,7 @@ jl_create_pool(size_t size)
 
 }
 
-void jl_destory_pool(struct jl_pool_s* pool) {
+void jl_destory_mempool(struct jl_pool_s* pool) {
     struct jl_large_s* l, *next_l;
     struct jl_pool_s* p, *n;
 

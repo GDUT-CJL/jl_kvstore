@@ -124,7 +124,7 @@ int _create_threads(thrdpool_t* pool,int count){
 }
 
 void
-destory_pool(thrdpool_t * pool) {
+destroy_thrdpool(thrdpool_t * pool) {
     atomic_store(&pool->quit, 1);
     _set_nonblock(pool->queue);
 }
