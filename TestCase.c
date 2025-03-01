@@ -6,12 +6,12 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/time.h>
-#define ENABLE_ARRAY_TEST   0
+#define ENABLE_ARRAY_TEST   1
 #define ENABLE_RBTREE_TEST   0
 #define ENABLE_HASHTABLE_TEST   0
 #define ENABLE_SKIPLIST_TEST   0
 #define ENABLE_BTREE_TEST       0
-#define ENABLE_DHASH_TEST       1
+#define ENABLE_DHASH_TEST       0
 
 
 #define ENABLE_LOG   0
