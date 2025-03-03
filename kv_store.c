@@ -56,6 +56,7 @@ void destoryEngine(){
 int main(int argc, char *argv[]) {
 	initPool();
 	InitEngine();
+	kvs_reload_message();
 	start_coroutine();
 	destoryEngine();
 	destoryPool();

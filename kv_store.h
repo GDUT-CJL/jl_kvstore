@@ -13,6 +13,7 @@
 #include "kv_dhash.h"
 #include "jl_Mempool.h"
 #include "jl_Thrdpool.h"
+#include "kv_reload.h"
 #define     PATH_TO_FLUSH_DISK      "redo.log"
 #define MAX_CLIENT_NUM			1000000
 #define TIME_SUB_MS(tv1, tv2)  ((tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000)

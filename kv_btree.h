@@ -34,6 +34,7 @@ typedef struct _btree{
 typedef btree kv_btree_t;
 
 kv_btree_t kv_b;
+int btree_insert_key(kv_btree_t* kv_b, char* key, char* value);
 int initBtree(kv_btree_t* kv_b, int m);
 int kvs_btree_desy(kv_btree_t* kv_b);
 int kvs_btree_set(kv_btree_t* kv_b, char** tokens);

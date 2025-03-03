@@ -76,7 +76,7 @@ int kvs_parser_protocol(char *msg,char**buf,int count){
 				snprintf(msg,MAX_MSGBUFFER_LENGTH,"OK\n");
 			}
 			else{
-				snprintf(msg,MAX_MSGBUFFER_LENGTH,"FAILED\n");
+				snprintf(msg,MAX_MSGBUFFER_LENGTH,"FAILED\n");  
 			}
 			break;
 		}else if(count > 3){

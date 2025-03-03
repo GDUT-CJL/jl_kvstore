@@ -41,8 +41,7 @@ kvs_array_item_t* kvs_array_search_item(const char* key){
 		}
 		if((strcmp(array_table[idx].key,key) == 0)){
 			return &array_table[idx];
-		}
-			
+		}			
 	}
 	return NULL;
 }

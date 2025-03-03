@@ -1,7 +1,7 @@
 #include "kv_store.h"
 #include <unistd.h>
-#define     KV_FLUSH_TXT    0       //文本格式刷盘
-#define     KV_FLUSH_BIN    1       //二进制文件格式刷盘
+#define     KV_FLUSH_TXT    1       //文本格式刷盘
+#define     KV_FLUSH_BIN    0       //二进制文件格式刷盘
 #if KV_FLUSH_TXT
 // 统一的刷盘函数，减少文件打开和关闭的次数
 static int flush_to_disk(FILE* file, const char* format, const char* key, const char* value) {
