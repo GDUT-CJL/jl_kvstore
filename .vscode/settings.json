@@ -13,6 +13,8 @@
         "atomic": "cpp",
         "jl_thrdpool.h": "c",
         "pthread.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "kv_array.h": "c",
+        "unistd.h": "c"
     }
 }

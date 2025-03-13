@@ -25,7 +25,7 @@ typedef struct thrdpool_s{
     atomic_int quit;
     pthread_t* pthreads;
 }thrdpool_t;
-
+thrdpool_t* thrdpool;
 // 创建线程池
 thrdpool_t* create_thrdpool(int thrd_count);
 // 销毁线程池
