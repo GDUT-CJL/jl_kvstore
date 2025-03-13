@@ -56,7 +56,20 @@ void destoryEngine(){
 int main(int argc, char *argv[]) {
 	initPool();
 	InitEngine();
+
+	struct timeval begin;
+    gettimeofday(&begin,NULL);
+#if ENABLE_RELOAD_BIN
+	kvs_reload_bin();
+#endif
+#if ENABLE_RELOAD_TXT
 	kvs_reload_message();
+#endif
+    struct timeval end;
+    gettimeofday(&end,NULL);
+    double time_used = TIME_SUB_MS(end,begin);
+    printf("array used time:%f ms\n",time_used);
+
 	start_coroutine();
 	destoryEngine();
 	destoryPool();

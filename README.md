@@ -19,3 +19,5 @@ using Synchronize disk flashing: array used time:40227.000000 ms,qps: 248.59
 using thrdpool Asynchronous disk flashing: array used time:4089.000000 ms,qps: 2445.59
 
 
+# 5w 
+

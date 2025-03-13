@@ -1,15 +1,6 @@
 #include "kv_store.h"
 #include <sys/time.h>
 int array_count = 0;
-// struct kvs_array_item_s* array_table;
-
-
-// int initial_array(){
-// 	array_table = (struct kvs_array_item_s*)kvs_malloc(MAX_ARRAY_NUMS);
-// 	if(!array_table) return -1;
-// 	memset(array_table,0,MAX_ARRAY_NUMS * (sizeof(struct kvs_array_item_s)));
-// 	return 0;
-// }
 static void _clean_expired_task(){
 #if 1
 	struct timeval tv;
@@ -21,7 +12,6 @@ static void _clean_expired_task(){
 			if(enter->expired != 0 && cur_time > enter->expired){
 				kvs_free(enter->key);
 				kvs_free(enter->value);
-				//kvs_free((void*)enter->expired);
 				enter->key = NULL;
 				enter->expired = 0;
 				enter->value = NULL;

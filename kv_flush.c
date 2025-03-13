@@ -75,7 +75,7 @@ void flush_dhash(FILE* file){
 }
 
 void kv_flush_to_disk(){
-    FILE* file = fopen(PATH_TO_FLUSH_DISK, "w");
+    FILE* file = fopen(PATH_TO_FLUSH_DISK_TXT, "w");
     if(file == NULL){
         perror("fopen");
         return;
@@ -87,6 +87,7 @@ void kv_flush_to_disk(){
     flush_btree(file);
     flush_rbtree(root, file);
     flush_dhash(file);
+    fflush(file);
     fclose(file);
 }
 
@@ -103,12 +104,16 @@ void kv_flush_thread(void* arg){
 #include <string.h> // 包含字符串操作的函数  
 
 // 将数据写入文件，使用 fwrite  
-static int flush_to_disk(FILE* file, const char* key, const char* value) {  
-    // 计算键和值的长度  
+static int flush_to_disk(FILE* file, const char* cmd, const char* key, const char* value) {  
+    // 计算键和值的长度
+    size_t cmd_len = strlen(cmd);  
     size_t key_len = strlen(key);  
     size_t value_len = strlen(value);  
 
     // 写入键的长度和键  写入长度方便读取恢复数据
+    fwrite(&cmd_len,sizeof(size_t),1,file);
+    fwrite(cmd,sizeof(char),cmd_len,file);
+
     fwrite(&key_len, sizeof(size_t), 1, file); 
     fwrite(key, sizeof(char), key_len, file);  
 
@@ -122,7 +127,7 @@ static int flush_to_disk(FILE* file, const char* key, const char* value) {
 int flush_array(FILE* file) {  
     for (int i = 0; i < MAX_ARRAY_NUMS; ++i) {  
         if (array_table[i].key != NULL && array_table[i].value != NULL) {  
-            flush_to_disk(file, array_table[i].key, array_table[i].value);  
+            flush_to_disk(file, "set",array_table[i].key, array_table[i].value);  
         }  
     }  
     return 0;  
@@ -132,7 +137,7 @@ void flush_hash(FILE* file) {
     for (int i = 0; i < Hash->max_slots; ++i) { // 遍历到最大槽位  
         hashnode_t* node = Hash->nodes[i];  
         while (node != NULL) {  
-            flush_to_disk(file, node->key, node->value);  
+            flush_to_disk(file, "hset",node->key, node->value);  
             node = node->next;  
         }  
     }  
@@ -143,7 +148,7 @@ void btree_flush_node(btree_node *cur, FILE* file) {
 
     // 写入当前节点的键值对  
     for (int i = 0; i < cur->num; i++) {  
-        flush_to_disk(file, cur->keys[i], cur->values[i]);  
+        flush_to_disk(file,"bset", cur->keys[i], cur->values[i]);  
     }  
 
     // 递归遍历子节点  
@@ -162,7 +167,7 @@ void flush_btree(FILE* file) {
 
 void flush_rbtree(RBNode* root, FILE* file) {  
     if (root != NIL) {  
-        flush_to_disk(file, root->key, root->value);  
+        flush_to_disk(file, "rset", root->key, root->value);  
         flush_rbtree(root->left, file);  
         flush_rbtree(root->right, file);  
     }  
@@ -171,7 +176,7 @@ void flush_rbtree(RBNode* root, FILE* file) {
 void flush_skiplist(FILE* file) {  
     skipnode_t* cur_node = sklist->head->next[0];  
     while (cur_node != NULL) {  
-        flush_to_disk(file, cur_node->key, cur_node->value);  
+        flush_to_disk(file, "zset", cur_node->key, cur_node->value);  
         cur_node = cur_node->next[0];  
     }  
 }  
@@ -179,13 +184,13 @@ void flush_skiplist(FILE* file) {
 void flush_dhash(FILE* file) {  
     for (int i = 0; i < dhash.capacity; ++i) {  
         if (dhash.buckets[i] != NULL) {  
-            flush_to_disk(file, dhash.buckets[i]->key, dhash.buckets[i]->value);  
+            flush_to_disk(file, "dset", dhash.buckets[i]->key, dhash.buckets[i]->value);  
         }  
     }  
 }  
 
 void kv_flush_to_disk() {  
-    FILE* file = fopen(PATH_TO_FLUSH_DISK, "wb"); // 以二进制写入模式打开文件  
+    FILE* file = fopen(PATH_TO_FLUSH_DISK_BIN, "wb"); // 以二进制写入模式打开文件  
     if (file == NULL) {  
         perror("fopen");  
         return;  
