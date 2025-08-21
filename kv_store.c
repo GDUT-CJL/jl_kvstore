@@ -12,9 +12,11 @@
 #define JL_MEMPOOL_SIZE		1 << 12
 void* kvs_malloc(size_t size){
 	return jl_alloc(p,size);
+	//return malloc(size);
 }
 void kvs_free(void* ptr){
 	return jl_free(p,ptr);
+	//return free(ptr);
 }
 
 int initPool(){
@@ -38,6 +40,7 @@ int destoryPool(){
 }
 
 int InitEngine(){
+	init_array();
 	initRbtree();
 	init_hashtable();
 	initSkipTable();
@@ -57,18 +60,18 @@ int main(int argc, char *argv[]) {
 	initPool();
 	InitEngine();
 
-	struct timeval begin;
-    gettimeofday(&begin,NULL);
+	// struct timeval begin;
+    // gettimeofday(&begin,NULL);
 #if ENABLE_RELOAD_BIN
 	kvs_reload_bin();
 #endif
 #if ENABLE_RELOAD_TXT
 	kvs_reload_message();
 #endif
-    struct timeval end;
-    gettimeofday(&end,NULL);
-    double time_used = TIME_SUB_MS(end,begin);
-    printf("array used time:%f ms\n",time_used);
+    // struct timeval end;
+    // gettimeofday(&end,NULL);
+    // double time_used = TIME_SUB_MS(end,begin);
+    // printf("array used time:%f ms\n",time_used);
 
 	start_coroutine();
 	destoryEngine();

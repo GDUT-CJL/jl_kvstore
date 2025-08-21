@@ -134,9 +134,10 @@ skipnode_t* kvs_skiplist_search(char* key){
 }
 
 int kvs_skiplist_set(char* key, char* value){
-    // 寻找新节点应该插入的位置
+    // 找到每一层上应该插入新节点的前驱节点
     skipnode_t* update[sklist->max_level];  // 查找的路径
     skipnode_t* p = sklist->head;
+    // 从高层到低层，逐步找到新节点应插入的前驱位置。
     for(int i=sklist->cur_level-1; i>=0; i--){
         while(p->next[i] != NULL && strcmp(p->next[i]->key, key)<0){
             p = p->next[i];
@@ -144,7 +145,7 @@ int kvs_skiplist_set(char* key, char* value){
         update[i] = p;
     }
     // 将节点插入
-    if(p->next[0]!=NULL && strcmp(p->next[0]->key, key)==0)
+    if(p->next[0]!=NULL && strcmp(p->next[0]->key, key)==0)//检查是否已存在相同键
     {
         return -2;  // already have same key
     }else{
@@ -157,11 +158,11 @@ int kvs_skiplist_set(char* key, char* value){
         skipnode_t* new_node = _createNode(key, value, newlevel);
         if(new_node == NULL) return -1;
         // 完善当前层级之上的查找路径（也就是头节点）
-        if(newlevel > sklist->cur_level){
+        if(newlevel > sklist->cur_level){// 如果新节点层级高于现有最大层
             for(int i=sklist->cur_level; i<newlevel; i++){
                 update[i] = sklist->head;
             }
-            sklist->cur_level = newlevel;
+            sklist->cur_level = newlevel;//更新update[]数组，对应上层指向头节点，提升sklist->cur_level。
         }
         // 更新新节点的前后指向
         for(int i=0; i < newlevel; i++){

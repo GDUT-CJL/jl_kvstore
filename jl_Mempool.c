@@ -136,6 +136,7 @@ void* jl_alloc(jl_pool_t* pool,int size)
     {
         do{
             m = jl_align_ptr(p->d.last,JL_MP_ALIGNMENT);
+            //m = jl_align_ptr_fast(p->d.last);
             if((size_t)(p->d.end - m) >= size)
             {
                 p->d.last = m + size;

@@ -1,7 +1,7 @@
 # Makefile for kvstore  
 
 # 源文件  
-SRC = kv_store.c kv_array.c kv_rbtree.c kv_hash.c kv_btree.c kv_skiplist.c kv_dhash.c jl_Mempool.c kv_flush.c jl_Thrdpool.c kv_net.c kv_protocol.c kv_reload.c
+SRC = kv_store.c kv_array.c kv_rbtree.c kv_hash.c kv_btree.c kv_skiplist.c kv_dhash.c jl_Mempool.c kv_flush.c jl_Thrdpool.c kv_net.c kv_protocol.c kv_reload.c  
 
 # 目标文件  
 OBJ = $(patsubst %.c, objs/%.o, $(SRC))  
@@ -12,11 +12,11 @@ TARGET = kvstore
 # 编译器和链接器设置  
 CC = gcc  
 
-# 编译选项  
-CFLAGS = -I ./NtyCo/core/  
+# 编译选项（添加调试信息 -g）  
+CFLAGS = -I ./NtyCo/core/ -g   
 
 # 链接选项  
-LDFLAGS = -L ./NtyCo/ -lntyco -lpthread -ldl -g
+LDFLAGS = -L ./NtyCo/ -lntyco -lpthread -ldl  
 
 # 默认目标  
 all: $(TARGET)  
@@ -27,12 +27,12 @@ $(TARGET): $(OBJ)
 
 # 生成中间目标文件  
 objs/%.o: %.c  
-	@mkdir -p objs
+	@mkdir -p objs  
 	$(CC) $(CFLAGS) -c $< -o $@  
 
 # 清理生成的文件  
 clean:  
 	rm -f $(OBJ) $(TARGET)  
-	rmdir objs || true
+	rmdir objs || true  
 
-.PHONY: all clean
+.PHONY: all clean  

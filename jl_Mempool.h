@@ -9,6 +9,10 @@
 #define JL_MAX_ALLOC_FROM_POOL     (JL_MAX_POOLSIZE - 1)
 #define jl_align(n, alignment) (((n)+(alignment-1)) & ~(alignment-1))
 #define jl_align_ptr(p, alignment) (void *)((((size_t)p)+(alignment-1)) & ~(alignment-1))
+
+static inline unsigned char* jl_align_ptr_fast(unsigned char* p) {
+    return (unsigned char*)(((uintptr_t)p + 7) & ~(uintptr_t)7);
+}
 struct jl_pool_s *p;    //全局内存池  
 
 typedef struct jl_large_s

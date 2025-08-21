@@ -462,7 +462,7 @@ btree_node *btree_borrow(btree_node *cur, int idx_key, int idx_dest){
     }
     return node_dest;
 }
-
+#if 1
 // 合并：将cur节点的idx元素向下合并
 btree_node *btree_merge(btree *T, btree_node *cur, int idx){
     btree_node *left = cur->children[idx];
@@ -504,6 +504,57 @@ btree_node *btree_merge(btree *T, btree_node *cur, int idx){
     }
     return left;
 }
+#elif 0
+btree_node *btree_merge(btree *T, btree_node *cur, int idx){
+    btree_node *left = cur->children[idx];
+    btree_node *right = cur->children[idx+1];
+    // 保存原始数量
+    int original_num = cur->num;
+    
+    // 下移父节点键到左孩子
+    left->keys[left->num] = cur->keys[idx];
+    left->values[left->num] = cur->values[idx];
+    left->num++;
+    
+    // 左移父节点的键和子指针
+    for(int i=idx; i < original_num - 1; i++){
+        cur->keys[i] = cur->keys[i+1];
+        cur->values[i] = cur->values[i+1];
+        cur->children[i+1] = cur->children[i+2];
+    }
+    
+    // 释放原最后一个键和值
+
+    #if KV_BTYPE_INT_INT
+        cur->keys[original_num-1] = 0;
+        cur->values[original_num-1] = 0;
+    #elif KV_BTYPE_CHAR_CHAR
+        kvs_free(cur->keys[original_num - 1]);
+        kvs_free(cur->values[original_num - 1]);
+        cur->keys[original_num - 1] = NULL;
+        cur->values[original_num - 1] = NULL;
+    #endif
+    cur->children[original_num] = NULL;
+    cur->num = original_num - 1;  // 更新父节点键数量
+    
+    // 复制右兄弟的键和子节点到左兄弟
+    for(int i=0; i<right->num; i++){
+        left->keys[left->num] = right->keys[i];
+        left->values[left->num] = right->values[i];
+        left->children[left->num] = right->children[i];
+        left->num++;
+    }
+    left->children[left->num] = right->children[right->num];
+    
+    // 销毁右兄弟并更新根节点
+    btree_node_destroy(right);
+    if(T->root_node == cur && cur->num == 0){
+        btree_node_destroy(cur);
+        T->root_node = left;
+    }
+    return left;
+}
+#endif 
 
 // 找出当前节点索引为idx_key的元素的前驱节点
 btree_node* btree_precursor_node(btree *T, btree_node *cur, int idx_key){

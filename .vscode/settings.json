@@ -1,5 +1,6 @@
 {
     "files.associations": {
+        ".jsonc": "json",
         "nty_coroutine.h": "c",
         "kv_store.h": "c",
         "stdlib.h": "c",
@@ -15,6 +16,8 @@
         "pthread.h": "c",
         "stdio.h": "c",
         "kv_array.h": "c",
-        "unistd.h": "c"
+        "unistd.h": "c",
+        "kv_protocol.h": "c",
+        "kv_reload.h": "c"
     }
 }

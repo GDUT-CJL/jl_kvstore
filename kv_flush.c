@@ -13,7 +13,7 @@ static int flush_to_disk(FILE* file, const char* format, const char* key, const 
 
 int flush_array(FILE* file) {
     for (int i = 0; i < MAX_ARRAY_NUMS; ++i) {
-        flush_to_disk(file, "set %s %s\n", array_table[i].key, array_table[i].value);
+        flush_to_disk(file, "set %s %s\n", array_table[i].array->key, array_table[i].array->value);
     }
     return 0;
 }

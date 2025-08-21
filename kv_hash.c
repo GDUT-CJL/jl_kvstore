@@ -8,36 +8,25 @@ static unsigned long _hash(const char *key, int capacity) {
         hash = ((hash << 5) + hash) + c; // hash * 33 + c
     return hash % capacity;
 }
-// int _hash(char* key,int size){
-//     if(!key)    return -1;
-//     int sum = 0;
-//     int i = 0;
-//     while(key[i] != 0){
-//         sum += key[i];
-//         i++;
-//     }
-
-//     return sum % size;
-// }
 
 hashnode_t* _createNode(char* key,char* value){
     hashnode_t* node = (hashnode_t*)kvs_malloc(sizeof(hashnode_t));
     if(!node) return NULL;
 
-    node->key = (char*)kvs_malloc(sizeof(char));
+    node->key = (char*)kvs_malloc(strlen(key)+1);
     if(!node->key){
         kvs_free(node);
         return NULL;
     } 
 
-    node->value = (char*)kvs_malloc(sizeof(char));
+    node->value = (char*)kvs_malloc(strlen(value)+1);
     if(!node->value){
         kvs_free(node->key);
         kvs_free(node);
         return NULL;
     }
     strncpy(node->key,key,strlen(key)+1); 
-    strncpy(node->value,value,strlen(key)+1);
+    strncpy(node->value,value,strlen(value)+1);
 
     node->next = NULL;// 作为链表节点，这一步也很重要不要遗忘，方便以后添加
     return node; 
@@ -123,8 +112,8 @@ char* kvs_hash_get(char* key){
 int kvs_hash_delete(char* key){
     if (key == NULL) return -1;
     int idx = _hash(key,MAX_HASHSIZE);
-    hashnode_t* head = Hash->nodes[idx];
-    if(strcmp(head->key,key) == 0){
+    hashnode_t* head = Hash->nodes[idx];  // 找到对应的槽位头指针
+    if(strcmp(head->key,key) == 0){     // 如果为头节点
         hashnode_t* new_head = head->next;
         Hash->nodes[idx] = new_head;
 
@@ -137,6 +126,7 @@ int kvs_hash_delete(char* key){
         return 0;
     }
 
+    // 如果不是头节点则遍历该链表找到对应的key
     hashnode_t* cur = head;
     while(cur->next != NULL){
         if(strcmp(cur->next->key,key))    break;
@@ -155,8 +145,6 @@ int kvs_hash_delete(char* key){
 
     Hash->count--;
     return 0;
-
-    
 }
 
 int kvs_hash_count(){

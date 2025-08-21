@@ -42,6 +42,7 @@ int Connect_Server(const char* ip,int port){
 }
 
 int send_msg(int connfd,char* msg){
+    //usleep(500);
     int ret = send(connfd,msg,strlen(msg),0);
     //printf("Sending message: %s\n", msg);
     if(ret == -1){
@@ -93,7 +94,9 @@ void array_connect_10w(int connfd){
     int i;
     for(i = 0; i < MAX_REQUEST_NUM ; ++i){
         char msg[512] = {0};
-        snprintf(msg,512,"set key%d value%d",i,i);
+        snprintf(msg,512,"set key%d value%d\n",i,i);
+        //printf("%s\n",msg);
+        //snprintf(msg,512,"get key%d",i);
         test_case(connfd,msg,"OK\n","SetName");
     }
 }

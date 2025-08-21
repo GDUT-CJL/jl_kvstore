@@ -10,7 +10,6 @@ typedef enum kvs_type_s{
     KVS_TYPE_HSET,
     KVS_TYPE_ZSET,
     KVS_TYPE_DSET,
-    
     KVS_TYPE_END
 }kvs_type_t;
 

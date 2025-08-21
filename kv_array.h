@@ -7,8 +7,16 @@ typedef struct kvs_array_item_s{
 	char* value;
     long long expired;
 }kvs_array_item_t;
-struct kvs_array_item_s array_table[MAX_ARRAY_NUMS];
 
+typedef struct kvs_array_s{
+	kvs_array_item_t* array;
+	int array_count;
+	pthread_mutex_t array_mutex;
+}kvs_array_t;
+
+struct kvs_array_s* array_table;
+
+int init_array();
 kvs_array_item_t* kvs_array_search_item(const char* key);
 int kvs_array_exist(const char* key);
 int kvs_array_set(char* key,char* value);
