@@ -46,6 +46,7 @@ int InitEngine(){
 	initSkipTable();
 	initBtree(&kv_b,6);
 	dhash_table_init(&dhash,DHASH_INIT_TABLE_SIZE);
+	init_Rocksdb();
 }
 
 void destoryEngine(){

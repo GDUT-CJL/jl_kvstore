@@ -40,6 +40,11 @@ typedef enum kvs_cmd_e{
 	KV_CMD_DCOUNT,
 	KV_CMD_DDELETE,
 	KV_CMD_DEXIST,
+	
+	// rocksdb
+	KV_CMD_RCSET,
+	KV_CMD_RCGET,
+	KV_CMD_RCDELETE,
 
 	KV_CMD_ERROR,
 	KV_CMD_QUIT,
@@ -53,13 +58,14 @@ const char* commands[] = {
 	"HSET","HGET","HCOUNT","HDELETE","HEXIST",
 	"ZSET","ZGET","ZCOUNT","ZDELETE","ZEXIST",
 	"DSET","DGET","DCOUNT","DDELETE","DEXIST",
+	"RCSET","RCGET","RCDELETE",
 };
 #define MAX_TOKENS 		32
 
 int kvs_parser_protocol(char *msg,char**buf,int count){
 	if(buf == NULL || buf[0] == NULL || count == 0) return KV_CMD_ERROR;
 	int cmd = KV_CMD_START;
-	for(cmd = KV_CMD_START;cmd <= KV_CMD_DEXIST;cmd++){
+	for(cmd = KV_CMD_START;cmd <= KV_CMD_RCDELETE;cmd++){
 		if(0 == strcasecmp(buf[0],commands[cmd])){
 			//printf("%d %s\n",cmd,commands[cmd]);
 			break;
@@ -407,6 +413,7 @@ int kvs_parser_protocol(char *msg,char**buf,int count){
 		memset(msg,0,MAX_MSGBUFFER_LENGTH);
 		if(value){
 			snprintf(msg,MAX_MSGBUFFER_LENGTH,"%s\n",value);
+			free(value);
 		}
 		else{
 			snprintf(msg,MAX_MSGBUFFER_LENGTH,"NO EXIST\n");
@@ -447,9 +454,53 @@ int kvs_parser_protocol(char *msg,char**buf,int count){
 		}
 		break;
 	}
+	// rocksdb
+	case KV_CMD_RCSET:
+	{
+		assert(count == 3);
+		int ret = kvs_rocksdb_set(rocksdb_obj,buf[1],buf[2]);
+		memset(msg,0,MAX_MSGBUFFER_LENGTH);
+		if(ret == 0){
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"%s\n","OK\n");
+		}
+		else{
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"FAILE\n");
+		}
+		break;
+	}
+	
+	case KV_CMD_RCGET:
+	{
+		assert(count == 2);
+		char* value = kvs_rocksdb_get(rocksdb_obj,buf[1]);
+		memset(msg,0,MAX_MSGBUFFER_LENGTH);
+		if(value){
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"%s\n",value);
+			free(value);
+		}
+		else{
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"NO EXIST\n");
+		}
+		break;
+	}
+	
+	case KV_CMD_RCDELETE:
+	{
+		assert(count == 2);
+		int ret = kvs_rocksdb_delete(rocksdb_obj,buf[1]);
+		memset(msg,0,MAX_MSGBUFFER_LENGTH);
+		if(ret == 0){
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"OK\n");
+		}
+		else{
+			snprintf(msg,MAX_MSGBUFFER_LENGTH,"NO EXIST\n");
+		}
+		break;
+	}
 	default:
 		break;
 	}
+	
 }
 
 

@@ -6,17 +6,17 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/time.h>
-#define ENABLE_ARRAY_TEST   1
+#define ENABLE_ARRAY_TEST   0
 #define ENABLE_RBTREE_TEST   0 
 #define ENABLE_HASHTABLE_TEST   0
 #define ENABLE_SKIPLIST_TEST   0
 #define ENABLE_BTREE_TEST       0
 #define ENABLE_DHASH_TEST       0
-
+#define ENABLE_ROCKSDB_TEST     1
 
 #define ENABLE_LOG   0
 
-#define MAX_REQUEST_NUM			100000
+#define MAX_REQUEST_NUM			10000
 #define TIME_SUB_MS(tv1, tv2)  ((tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000)
 
 #define LOG(_fmt, ...) fprintf(stdout, "[%s:%d] " _fmt, __FILE__, __LINE__, __VA_ARGS__)
@@ -42,7 +42,6 @@ int Connect_Server(const char* ip,int port){
 }
 
 int send_msg(int connfd,char* msg){
-    //usleep(500);
     int ret = send(connfd,msg,strlen(msg),0);
     //printf("Sending message: %s\n", msg);
     if(ret == -1){
@@ -94,9 +93,7 @@ void array_connect_10w(int connfd){
     int i;
     for(i = 0; i < MAX_REQUEST_NUM ; ++i){
         char msg[512] = {0};
-        snprintf(msg,512,"set key%d value%d\n",i,i);
-        //printf("%s\n",msg);
-        //snprintf(msg,512,"get key%d",i);
+        snprintf(msg,512,"set key%d value%d",i,i);
         test_case(connfd,msg,"OK\n","SetName");
     }
 }
@@ -145,7 +142,15 @@ void dhash_connect_10w(int connfd){
         test_case(connfd,msg,"OK\n","SetName");
     }
 }
-
+void rocksdb_connect_10w(int connfd)
+{
+    int i;
+    for(i = 0; i < MAX_REQUEST_NUM ; ++i){
+        char msg[512] = {0};
+        snprintf(msg,512,"rcset key%d value%d",i,i);
+        test_case(connfd,msg,"OK\n","SetName");
+    }
+}
 int main(int argc,char *argv[])
 {
     assert(argc == 3);
@@ -274,6 +279,16 @@ int main(int argc,char *argv[])
     gettimeofday(&dhash_end,NULL);
     double dhash_time_used = TIME_SUB_MS(dhash_end,dhash_begin);
     LOG("dhash used time:%f ms,qps: %.2f\n",dhash_time_used,MAX_REQUEST_NUM / (dhash_time_used / 1000));
+#endif
+
+#if ENABLE_ROCKSDB_TEST
+    struct timeval rocksdb_begin;
+    gettimeofday(&rocksdb_begin,NULL);
+    rocksdb_connect_10w(connfd);
+    struct timeval rocksdb_end;
+    gettimeofday(&rocksdb_end,NULL);
+    double rocksdb_time_used = TIME_SUB_MS(rocksdb_end,rocksdb_begin);
+    LOG("rocksdb used time:%f ms,qps: %.2f\n",rocksdb_time_used,MAX_REQUEST_NUM / (rocksdb_time_used / 1000));
 #endif
     close(connfd);
 }
