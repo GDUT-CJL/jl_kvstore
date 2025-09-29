@@ -79,7 +79,8 @@ int kvs_hash_set(char* key,char* value){
     // 遍历整个链表
     while(node != NULL){
         if(strcmp(node->key,key) == 0){//exist
-            return 1;
+            strncpy(node->value,value,strlen(value)+1);
+            return 0;
         }
         node = node->next;
     }

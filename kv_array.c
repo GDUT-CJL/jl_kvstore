@@ -47,6 +47,8 @@ int init_array(){
 		kvs_free(array_table->array->key);
 		return -1;
 	}
+	
+	array_table->array_count = 0;
 
     return 0;
 }
@@ -108,10 +110,12 @@ int kvs_array_insert_ttl(char* key,char* value,long long expired_time){
 		if(strcmp(array_table->array[i].key, kcopy) == 0)
 			break;
 	}
+	if(kvs_array_search_item(kcopy) == NULL){
+		array_table->array_count++;	
+	}
 	array_table->array[i].key = kcopy;
 	array_table->array[i].value = vcopy;
 	array_table->array[i].expired = expired_time;
-	array_table->array_count++;
 	pthread_mutex_unlock(&array_table->array_mutex);
 	return 0;
 }

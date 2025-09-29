@@ -147,7 +147,8 @@ int kvs_skiplist_set(char* key, char* value){
     // 将节点插入
     if(p->next[0]!=NULL && strcmp(p->next[0]->key, key)==0)//检查是否已存在相同键
     {
-        return -2;  // already have same key
+        strncpy(p->next[0]->value, value,strlen(value));
+        return 0;  // already have same key
     }else{
         // 新节点的层数--概率0.5
         int newlevel = 1;
