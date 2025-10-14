@@ -320,8 +320,18 @@ int btree_insert_key(btree *T, B_KEY_SUB_TYPE key, B_VALUE_SUB_TYPE value){
                 }
             #elif KV_BTYPE_CHAR_CHAR
                 if(strcmp(key, cur->keys[i]) == 0){
-                    // printf("insert failed! already has key=%d!\n", key);
-                    return -2;
+                    // 释放旧的值
+                    // kvs_free(cur->values[i]);
+                    
+                    // // 分配并复制新的值
+                    // char* vcopy = (char*)kvs_malloc(strlen(value)+1);
+                    // if(vcopy == NULL) return -1;
+                    // strncpy(vcopy, value, strlen(value)+1);
+                    // cur->values[i] = vcopy;
+                    
+                    // 注意：这里不应该减少count，因为我们是替换而不是新增
+                    //T->count--;
+                    return 0;
                 }else if(strcmp(key, cur->keys[i]) < 0){
                     next_idx = i;
                     break;
@@ -354,8 +364,9 @@ int btree_insert_key(btree *T, B_KEY_SUB_TYPE key, B_VALUE_SUB_TYPE value){
             }
         #elif KV_BTYPE_CHAR_CHAR
             if(strcmp(key, cur->keys[i]) == 0){
-                // printf("insert failed! already has key=%d!\n", key);
-                return -2;
+                // pos = i;
+                // T->count--;
+                break;
             }else if(strcmp(key, cur->keys[i]) < 0){
                 pos = i;
                 break;
@@ -811,36 +822,42 @@ btree_node* btree_search_key(btree *T, B_KEY_SUB_TYPE key){
 }
 #elif KV_BTYPE_CHAR_CHAR
 btree_node* btree_search_key(btree *T, B_KEY_SUB_TYPE key){
-	if (key == NULL) {   
+    if (key == NULL || T == NULL || T->root_node == NULL) {   
         return NULL;  
     }  
-    else if(key != NULL){
-        btree_node *cur = T->root_node;
-        // 先寻找是否为非叶子节点
-        while(cur->leaf == 0){
-            if(strcmp(key, cur->keys[0]) < 0){
-                cur = cur->children[0];
-            }else if(strcmp(key, cur->keys[cur->num-1]) > 0){
-                cur = cur->children[cur->num];
-            }else{
-                for(int i=0; i<cur->num; i++){
-                    if(strcmp(cur->keys[i], key) == 0){
-                        return cur;
-                    }else if((i<cur->num-1) && (strcmp(key,cur->keys[i])>0) && (strcmp(key,cur->keys[i+1])<0)){
-                        cur = cur->children[i+1];
-                    }
+    
+    btree_node *cur = T->root_node;
+    
+    // 先寻找是否为非叶子节点
+    while(cur != NULL && cur->leaf == 0){  // 添加 cur != NULL 检查
+        if(strcmp(key, cur->keys[0]) < 0){
+            cur = cur->children[0];
+        }else if(strcmp(key, cur->keys[cur->num-1]) > 0){
+            cur = cur->children[cur->num];
+        }else{
+            int found = 0;
+            for(int i=0; i<cur->num; i++){
+                if(strcmp(cur->keys[i], key) == 0){
+                    return cur;
+                }else if((i<cur->num-1) && (strcmp(key,cur->keys[i])>0) && (strcmp(key,cur->keys[i+1])<0)){
+                    cur = cur->children[i+1];
+                    found = 1;
+                    break;
                 }
             }
+            if (!found) break;
         }
-        // 在寻找是否为叶子节点
-        if(cur->leaf == 1){
-            for(int i=0; i<cur->num; i++){
-                if(strcmp(cur->keys[i],key) == 0){
-                    return cur;
-                }
+    }
+    
+    // 在寻找是否为叶子节点
+    if(cur != NULL && cur->leaf == 1){  // 添加 cur != NULL 检查
+        for(int i=0; i<cur->num; i++){
+            if(strcmp(cur->keys[i],key) == 0){
+                return cur;
             }
         }
     }
+    
     // 都没找到返回NULL
     return NULL;
 }
@@ -1004,8 +1021,29 @@ int kvs_btree_desy(kv_btree_t* kv_b){
 }
 // 插入指令：有就报错，没有就创建
 // 返回值：0表示成功、-1表示失败、-2表示已经有key
+// 修改 kvs_btree_set 函数
 int kvs_btree_set(kv_btree_t* kv_b, char** tokens){
-    return btree_insert_key(kv_b, tokens[1], tokens[2]);
+    // 先检查键是否存在
+    if(kvs_btree_exist(kv_b, tokens) == 0){
+        // 键已存在，进行更新
+        btree_node* node = btree_search_key(kv_b, tokens[1]);
+        if(node != NULL){
+            for(int i = 0; i < node->num; i++){
+                if(strcmp(node->keys[i], tokens[1]) == 0){
+                    kvs_free(node->values[i]);
+                    char* vcopy = (char*)kvs_malloc(strlen(tokens[2])+1);
+                    if(vcopy == NULL) return -1;
+                    strncpy(vcopy, tokens[2], strlen(tokens[2])+1);
+                    node->values[i] = vcopy;
+                    return 0;
+                }
+            }
+        }
+        return -1;
+    } else {
+        // 键不存在，进行插入
+        return btree_insert_key(kv_b, tokens[1], tokens[2]);
+    }
 }
 // 查找指令
 // 返回值：正常返回node，NULL表示没有

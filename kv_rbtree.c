@@ -123,7 +123,10 @@ static int insert(RBNode **root, char* key, char* value) {
     RBNode *x = *root;
     while (x != NIL) {
         y = x;
-        if (strcmp(z->key,x->key) < 0) {
+        if(strcmp(z->key,x->key) == 0){
+            x->value = z->value;
+            return 0;
+        } else if(strcmp(z->key,x->key) < 0) {
             x = x->left;
         } else {
             x = x->right;
